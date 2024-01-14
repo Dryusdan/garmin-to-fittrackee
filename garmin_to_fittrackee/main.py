@@ -228,7 +228,7 @@ def config_tool(
 
 def config_exists():
     if (
-        or not Path(f"{config_path}/garmintoken").is_dir()
+        not Path(f"{config_path}/garmintoken").is_dir()
         or not Path(f"{config_path}/fittrackee.yml").is_file()
         or not Path(f"{config_path}/config.yml").is_file()
     ):
