@@ -244,3 +244,19 @@ class Fittrackee:
         r = self.client.get(f"{self.api_url}/sports")
         results = r.json()
         return results
+
+    def delete_workout(self, workout_id: int):
+        try:
+            r = self.client.delete(f"{self.api_url}/workouts/{workout_id}")
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            log.error(
+                f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
+        log.warning(f"Workout {workout_id} deleted")

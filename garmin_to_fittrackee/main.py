@@ -28,8 +28,8 @@ if Path(f"{config_path}/config.yml").is_file():
         config = yaml.safe_load(file)
     if config["sqlite"]["use"]:
         import sqlite3
-        db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
+        db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
 
 @app.command()
@@ -44,6 +44,10 @@ def sync(
         bool, typer.Option(help="Can ask question during the sync")
     ] = True,
 ):
+    """
+    Synchronise Garmin's activities in Fittrackee.
+    First run, all of gamin's activities will be fetch.
+    """
     if not config_exists():
         return
 
@@ -128,6 +132,33 @@ def sync(
         end_datetime = start_datetime.add(days=1)
         if today.diff(end_datetime, False).in_seconds() > 0:
             end_datetime = today
+
+
+@app.command()
+def reset(
+    force: Annotated[
+        bool,
+        typer.Option(help="Security reason, you need to force the reset"),
+    ] = "",
+):
+    """
+    Reset database and remove ALL of workouts in Fittrackee. (Usefull for development)
+    """
+    if not force:
+        log.warning("No force, no chocolate")
+        return
+    cur = db.cursor()
+    cur.execute("DROP TABLE activities_ids")
+    db.commit()
+    cur = db.cursor()
+    cur.execute(
+        "CREATE TABLE activities_ids(fittrackee_id VARCHAR(255) UNIQUE, garmin_id INTEGER(100) UNIQUE)"
+    )
+    db.commit()
+    fittrackee = Fittrackee(config_path)
+    workouts = fittrackee.get_all_workouts()
+    for workout in workouts:
+        fittrackee.delete_workout(workout.id)
 
 
 @setup.command()
