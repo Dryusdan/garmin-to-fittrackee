@@ -10,7 +10,7 @@ from garmin_to_fittrackee.fittrackee import Fittrackee
 from garmin_to_fittrackee.logs import Log
 from garmin_to_fittrackee.sports import Sports
 
-
+log = Log(name=__name__)
 home = str(Path.home())
 
 app = typer.Typer()
@@ -23,18 +23,13 @@ setup = typer.Typer()
 app.add_typer(setup, name="setup")
 
 if Path(f"{config_path}/config.yml").is_file():
+    log.debug("Import config")
     with open(f"{config_path}/config.yml", "r") as file:
         config = yaml.safe_load(file)
+    if config["sqlite"]["use"]:
+        import sqlite3
+        db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
-if config is not None and "log" in config and "level" in config["log"]:
-    log = Log(name=__name__, level=config["log"]["level"])
-else:
-    log = Log(name=__name__)
-
-if config is not None and "sqlite" in config and "use" in config["sqlite"]:
-    import sqlite3
-
-    db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
 
 @app.command()
