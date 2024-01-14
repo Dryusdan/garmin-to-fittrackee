@@ -1,3 +1,4 @@
+import sqlite3
 from pathlib import Path
 
 import pendulum
@@ -26,10 +27,8 @@ if Path(f"{config_path}/config.yml").is_file():
     log.debug("Import config")
     with open(f"{config_path}/config.yml", "r") as file:
         config = yaml.safe_load(file)
-    if config["sqlite"]["use"]:
-        import sqlite3
 
-        db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
+    db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
 
 @app.command()
@@ -97,6 +96,10 @@ def sync(
         )
         if activities:
             for activity in activities:
+                cur = db.cursor()
+                res = cur.execute(f"SELECT garmin_id FROM activities_ids WHERE garmin_id='{activity['activityId']}'")
+                if res.fetchone() is None:
+                    continue
                 activityType_id = activity["activityType"]["typeId"]
                 fittrackee_sport_id = Sports.get_fittrackee_sport_by_garmin_id(
                     activityType_id
@@ -228,14 +231,6 @@ def fittrackee(
 
 @setup.command()
 def config_tool(
-    use_database: Annotated[
-        bool,
-        typer.Option(
-            help="Use database to match workout accros plateform. If not specify, we use prompt."
-        )
-        == "",
-        typer.Option(prompt=True),
-    ],
     database_path: Annotated[
         str,
         typer.Option(help="Database location. If not exist, path will be created."),
@@ -246,22 +241,20 @@ def config_tool(
     ] = "INFO",
 ):
     data = {
-        "sqlite": {"use": use_database, "path": database_path},
+        "sqlite": {"use": True, "path": database_path},
         "log": {"level": verbose_level},
     }
     with open(f"{config_path}/config.yml", "w") as file:
         yaml.dump(data, file, default_flow_style=False)
-    if use_database is True:
-        log.debug("Create database")
-        path = Path(database_path)
-        path.mkdir(parents=True, exist_ok=True)
-        import sqlite3
+    log.debug("Create database")
+    path = Path(database_path)
+    path.mkdir(parents=True, exist_ok=True)
 
-        db = sqlite3.connect(f"{database_path}/db.sqlite3")
-        cur = db.cursor()
-        cur.execute(
-            "CREATE TABLE activities_ids(fittrackee_id VARCHAR(255) UNIQUE, garmin_id INTEGER(100) UNIQUE)"
-        )
+    db = sqlite3.connect(f"{database_path}/db.sqlite3")
+    cur = db.cursor()
+    cur.execute(
+        "CREATE TABLE activities_ids(fittrackee_id VARCHAR(255) UNIQUE, garmin_id INTEGER(100) UNIQUE)"
+    )
 
 
 def config_exists():
