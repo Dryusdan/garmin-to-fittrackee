@@ -1,23 +1,14 @@
+from pathlib import Path
+
 import pendulum
-import time
 import typer
 import yaml
-
-from garth.exc import GarthHTTPError
-from garminconnect import (
-    Garmin,
-    GarminConnectAuthenticationError,
-    GarminConnectConnectionError,
-    GarminConnectTooManyRequestsError,
-)
-from garmin_to_fittrackee.logs import Log
-from garmin_to_fittrackee.fittrackee import Fittrackee
-from garmin_to_fittrackee.sports import Sports
-from pathlib import Path
-from rich import print
-from requests_oauthlib import OAuth2Session
+from garminconnect import Garmin
 from typing_extensions import Annotated
 
+from garmin_to_fittrackee.fittrackee import Fittrackee
+from garmin_to_fittrackee.logs import Log
+from garmin_to_fittrackee.sports import Sports
 
 log = Log(__name__)
 
@@ -26,10 +17,18 @@ home = str(Path.home())
 app = typer.Typer()
 
 config_path = f"{home}/.config/garmin-to-fittrackee"
-# __name__
 
 setup = typer.Typer()
 app.add_typer(setup, name="setup")
+
+if Path(f"{config_path}/config.yml").is_file():
+    log.debug("Import config")
+    with open(f"{config_path}/config.yml", "r") as file:
+        config = yaml.safe_load(file)
+    if config["sqlite"]["use"]:
+        import sqlite3
+
+        db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
 
 @app.command()
@@ -56,7 +55,7 @@ def sync(
         end_datetime = start_datetime.add(days=1)
     else:
         if interactive:
-            log.warning(f"No workout present on Fittrackee")
+            log.warning("No workout present on Fittrackee")
             start_year = int(typer.prompt("What year was your first Garmin activity?"))
             log.info(f"Okay, fetching activity on Garmin from year {start_year}")
         elif not interactive and start_year is not None:
@@ -110,6 +109,20 @@ def sync(
                 if workout is not None:
                     log.debug(f"Deleting {gpx_file}")
                     Path(gpx_file).unlink(missing_ok=True)
+                    if config["sqlite"]["use"]:
+                        log.debug(
+                            "Adding workout and activity matches in tool database"
+                        )
+                        log.debug(
+                            f"Using Fittrackee ID {workout.id} and Garmin ID {activity['activityId']}"
+                        )
+                        data_insert = (workout.id, activity["activityId"])
+                        cur = db.cursor()
+                        cur.execute(
+                            "INSERT INTO activities_ids (fittrackee_id, garmin_id) VALUES(?, ?)",
+                            data_insert,
+                        )
+                        db.commit()
         start_datetime = start_datetime.add(days=1)
         end_datetime = start_datetime.add(days=1)
         if today.diff(end_datetime, False).in_seconds() > 0:
@@ -174,7 +187,7 @@ def fittrackee(
     if force:
         log.warning("Rewrite configuration file")
         Path(f"{config_path}/fittrackee.yml").unlink(missing_ok=True)
-    fittrackee = Fittrackee(
+    Fittrackee(
         config_path=config_path,
         client_id=client_id,
         client_secret=client_secret,
@@ -182,15 +195,46 @@ def fittrackee(
     )
 
 
+@setup.command()
+def config_tool(
+    use_database: Annotated[
+        bool,
+        typer.Option(
+            help="Use database to match workout accros plateform. If not specify, we use prompt."
+        )
+        == "",
+        typer.Option(prompt=True),
+    ],
+    database_path: Annotated[
+        str,
+        typer.Option(help="Database location. If not exist, path will be created."),
+    ] = f"{home}/.local/share/garmin_to_fittrackee",
+):
+    data = {"sqlite": {"use": use_database, "path": database_path}}
+    with open(f"{config_path}/config.yml", "w") as file:
+        yaml.dump(data, file, default_flow_style=False)
+    if use_database is True:
+        log.debug("Create database")
+        path = Path(database_path)
+        path.mkdir(parents=True, exist_ok=True)
+        import sqlite3
+
+        db = sqlite3.connect(f"{database_path}/db.sqlite3")
+        cur = db.cursor()
+        cur.execute(
+            "CREATE TABLE activities_ids(fittrackee_id VARCHAR(255) UNIQUE, garmin_id INTEGER(100) UNIQUE)"
+        )
+
+
 def config_exists():
-    print(config_path)
     if (
         not Path(config_path).is_dir()
         or not Path(f"{config_path}/garmintoken").is_dir()
         or not Path(f"{config_path}/fittrackee.yml").is_file()
+        or not Path(f"{config_path}/config.yml").is_file()
     ):
         log.error(
-            "Config files aren't present. Start using garmin-to-fittrackee with `setup garmin` and `setup fittrackee` command"
+            "Config files aren't present. Start using garmin-to-fittrackee with `setup config-tool`, `setup garmin` and `setup fittrackee` command"
         )
         return False
     else:

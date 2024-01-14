@@ -1,15 +1,16 @@
 import json
+from pathlib import Path
+from typing import Union
+
 import pendulum
 import requests
 import typer
 import yaml
+from requests_oauthlib import OAuth2Session
+from rich import print
 
 from garmin_to_fittrackee.logs import Log
 from garmin_to_fittrackee.workout import Workout
-from pathlib import Path
-from requests_oauthlib import OAuth2Session
-from rich import print
-from typing import Union
 
 log = Log(__name__)
 
@@ -32,7 +33,7 @@ class Fittrackee:
         self.client_secret = client_secret
         self.api_url = None
         self.sports = None
-        if timezone == None:
+        if timezone is None:
             dt = pendulum.now()
             timezone = dt.timezone.name
         self.timezone = timezone
@@ -90,7 +91,7 @@ class Fittrackee:
         authorize_url = f"https://{self.host}/profile/apps/authorize"
         self.api_url = f"https://{self.host}/api"
 
-        redirect_uri = f"https://localhost/"
+        redirect_uri = "https://localhost/"
         scope = "workouts:read workouts:write profile:read"
         oauth = OAuth2Session(self.client_id, redirect_uri=redirect_uri, scope=scope)
         authorization_url, state = oauth.authorization_url(authorize_url)
@@ -164,7 +165,7 @@ class Fittrackee:
                     f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
                 )
                 return
-            except requests.RequestException as error:
+            except requests.RequestException:
                 log.error(str(e))
                 return
             results = r.json()
@@ -192,7 +193,7 @@ class Fittrackee:
                 f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
             )
             return
-        except requests.RequestException as error:
+        except requests.RequestException:
             log.error(str(e))
             return
         results = r.json()
@@ -228,7 +229,7 @@ class Fittrackee:
                 f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
             )
             return
-        except requests.RequestException as error:
+        except requests.RequestException as e:
             log.error(str(e))
             return
         results = r.json()
