@@ -10,7 +10,6 @@ from garmin_to_fittrackee.fittrackee import Fittrackee
 from garmin_to_fittrackee.logs import Log
 from garmin_to_fittrackee.sports import Sports
 
-log = Log(__name__)
 
 home = str(Path.home())
 
@@ -19,17 +18,23 @@ app = typer.Typer()
 config_path = f"{home}/.config/garmin-to-fittrackee"
 Path(config_path).mkdir(parents=True, exist_ok=True)
 
+
 setup = typer.Typer()
 app.add_typer(setup, name="setup")
 
 if Path(f"{config_path}/config.yml").is_file():
-    log.debug("Import config")
     with open(f"{config_path}/config.yml", "r") as file:
         config = yaml.safe_load(file)
-    if config["sqlite"]["use"]:
-        import sqlite3
 
-        db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
+if config is not None and "log" in config and "level" in config["log"]:
+    log = Log(name=__name__, level=config["log"]["level"])
+else:
+    log = Log(name=__name__)
+
+if config is not None and "sqlite" in config and "use" in config["sqlite"]:
+    import sqlite3
+
+    db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
 
 
 @app.command()
@@ -209,8 +214,15 @@ def config_tool(
         str,
         typer.Option(help="Database location. If not exist, path will be created."),
     ] = f"{home}/.local/share/garmin_to_fittrackee",
+    verbose_level: Annotated[
+        str,
+        typer.Option(help="Verbose level. Maybe DEBUG, INFO, WARNING, ERROR, CRITICAL"),
+    ] = "INFO",
 ):
-    data = {"sqlite": {"use": use_database, "path": database_path}}
+    data = {
+        "sqlite": {"use": use_database, "path": database_path},
+        "log": {"level": verbose_level},
+    }
     with open(f"{config_path}/config.yml", "w") as file:
         yaml.dump(data, file, default_flow_style=False)
     if use_database is True:
