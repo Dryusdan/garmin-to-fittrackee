@@ -124,7 +124,7 @@ def sync(
                             data_insert,
                         )
                         db.commit()
-        start_datetime = start_datetime.add(days=1)
+        start_datetime = start_datetime.add(days=2)
         end_datetime = start_datetime.add(days=1)
         if today.diff(end_datetime, False).in_seconds() > 0:
             end_datetime = today
