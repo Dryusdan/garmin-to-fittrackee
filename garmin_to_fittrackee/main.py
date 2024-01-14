@@ -17,6 +17,7 @@ home = str(Path.home())
 app = typer.Typer()
 
 config_path = f"{home}/.config/garmin-to-fittrackee"
+Path(config_path).mkdir(parents=True, exist_ok=True)
 
 setup = typer.Typer()
 app.add_typer(setup, name="setup")
@@ -149,7 +150,6 @@ def garmin(
     ],
     store: bool = True,
 ):
-    Path(config_path).mkdir(parents=True, exist_ok=True)
     garmin = Garmin(email, password)
     garmin.login()
     if store:
@@ -228,7 +228,6 @@ def config_tool(
 
 def config_exists():
     if (
-        not Path(config_path).is_dir()
         or not Path(f"{config_path}/garmintoken").is_dir()
         or not Path(f"{config_path}/fittrackee.yml").is_file()
         or not Path(f"{config_path}/config.yml").is_file()
