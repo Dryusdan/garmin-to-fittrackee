@@ -162,7 +162,7 @@ class Fittrackee:
                 error_code = error.response.status_code
                 log.debug(error.response.headers)
                 log.error(
-                    f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
+                    f"Failed to get all workouts. Return code {error_code}. Error {error.response.text}"
                 )
                 return
             except requests.RequestException:
@@ -178,6 +178,7 @@ class Fittrackee:
                 f"Fetched page {page} of workouts " f"(fetched {len(workouts)} so far)"
             )
             page += 1
+            return workouts
 
     def get_last_workout(self):
         try:

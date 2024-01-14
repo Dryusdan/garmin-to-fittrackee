@@ -139,7 +139,7 @@ def reset(
     force: Annotated[
         bool,
         typer.Option(help="Security reason, you need to force the reset"),
-    ] = "",
+    ] = False,
 ):
     """
     Reset database and remove ALL of workouts in Fittrackee. (Usefull for development)
