@@ -97,8 +97,10 @@ def sync(
         if activities:
             for activity in activities:
                 cur = db.cursor()
-                res = cur.execute(f"SELECT garmin_id FROM activities_ids WHERE garmin_id='{activity['activityId']}'")
-                if res.fetchone() is None:
+                res = cur.execute(
+                    f"SELECT garmin_id FROM activities_ids WHERE garmin_id='{activity['activityId']}'"
+                )
+                if res.fetchone() is not None:
                     continue
                 activityType_id = activity["activityType"]["typeId"]
                 fittrackee_sport_id = Sports.get_fittrackee_sport_by_garmin_id(
