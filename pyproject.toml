@@ -26,6 +26,10 @@ pylama = "^8.4.1"
 isort = "^5.13.2"
 
 
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.4"
+
 [[tool.poetry.source]]
 name = "gitea"
 url = "https://git.dryusdan.fr/api/packages/Dryusdan/pypi"
