@@ -242,6 +242,9 @@ class Fittrackee:
         return workout
 
     def get_sports(self):
+        """
+        Needed only during development
+        """
         r = self.client.get(f"{self.api_url}/sports")
         results = r.json()
         return results
