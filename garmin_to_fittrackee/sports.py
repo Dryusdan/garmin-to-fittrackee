@@ -5,7 +5,7 @@ log = Log(__name__)
 
 class Sports:
     @staticmethod
-    def get_fittrackee_sport_by_garmin_id(garmin_sport_id: int):
+    def get_fittrackee_sport_by_garmin_id(garmin_sport_id: int) -> int:
         if not isinstance(garmin_sport_id, int):
             log.critical(f"garmin_sport_id {garmin_sport_id} is not an int")
             raise ValueError(f"garmin_sport_id {garmin_sport_id} is not an int")
