@@ -15,5 +15,5 @@ def test_get_fittrackee_sport_by_garmin_id_wrong_id():
 
 
 def test_get_fittrackee_sport_by_garmin_id_wrong():
-    with pytest.raises(ValueError, match=r".* 123 .*"):
-        sport = Sports.get_fittrackee_sport_by_garmin_id("Hello")
+    with pytest.raises(ValueError, match=r"garmin_sport_id Hello is not an int"):
+        Sports.get_fittrackee_sport_by_garmin_id("Hello")
