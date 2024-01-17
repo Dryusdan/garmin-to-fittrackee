@@ -1,0 +1,61 @@
+---
+name: Test PR validity
+run-name: PRtest
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - python3.12
+          - python3.11
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Build wheel package
+        run: poetry build
+  check:
+    strategy:
+      matrix:
+        os:
+          - python3.12
+          - python3.11
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install check program
+        run: poetry install --with dev
+      #- name: Run isort check
+      #  run: poetry run isort --recursive . --check-only
+      #- name: Run ruff check
+      #  run: poetry run ruff check . --exit-non-zero-on-fix
+      #- name: Run ruff formatter
+      #  run: poetry run ruff format . --check
+  test:
+    strategy:
+      matrix:
+        os:
+          - python3.12
+          - python3.11
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      #- name: Install test programm
+      #  run: poetry install --with test
+      #- name: Run unit test
+      #run: poetry run pytest

@@ -1,0 +1,19 @@
+name: Test the push
+run-name: pushtest
+on:
+  push:
+    branches-ignore:
+      - main
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [python3.12, python3.11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: ls
+        run: ls
