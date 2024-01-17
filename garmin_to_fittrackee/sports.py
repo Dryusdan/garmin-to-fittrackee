@@ -28,16 +28,14 @@ class Sports:
                 20 reference downhill_biking
                 143 reference gravel_cycling
                 """
-                log.debug(
-                    f"Mountain bike match match with garmin sport id {garmin_sport_id}"
-                )
+                log.debug(f"Mountain bike match with garmin sport id {garmin_sport_id}")
                 return 4
             case 175:
                 """
                 175 reference e_bike_mountain
                 """
                 log.debug(
-                    f"E-Mountain bike match match with garmin sport id {garmin_sport_id}"
+                    f"E-Mountain bike match with garmin sport id {garmin_sport_id}"
                 )
                 return 7
             case 25 | 152 | 176 | 198:
@@ -48,7 +46,7 @@ class Sports:
                 198 reference indoor_hand_cycling
                 """
                 log.debug(
-                    f"Virtual cycling match match with garmin sport id {garmin_sport_id}"
+                    f"Virtual cycling match with garmin sport id {garmin_sport_id}"
                 )
                 return 13
             # Running cases
@@ -64,11 +62,11 @@ class Sports:
                 156 reference indoor_running
                 181 reference ultra_run
                 """
-                log.debug(f"Running match match with garmin sport id {garmin_sport_id}")
+                log.debug(f"Running match with garmin sport id {garmin_sport_id}")
                 return 5
             # Hiking cases
             case 3:
-                log.debug(f"Hiking match match with garmin sport id {garmin_sport_id}")
+                log.debug(f"Hiking match with garmin sport id {garmin_sport_id}")
                 return 3
             # Walking case
             case 9 | 15 | 16:
@@ -77,16 +75,14 @@ class Sports:
                 15 reference casual_walking
                 16 reference speed_walking
                 """
-                log.debug(f"Walking match match with garmin sport id {garmin_sport_id}")
+                log.debug(f"Walking match with garmin sport id {garmin_sport_id}")
                 return 6
             # Winter sport cases
             case 167:
                 """
                 167 reference snow_shoe_ws
                 """
-                log.debug(
-                    f"Snowshoes match match with garmin sport id {garmin_sport_id}"
-                )
+                log.debug(f"Snowshoes match with garmin sport id {garmin_sport_id}")
                 return 12
             case 172 | 251 | 252:
                 """
@@ -95,7 +91,7 @@ class Sports:
                 252 reference resort_snowboarding
                 """
                 log.debug(
-                    f"Skiing (Alpine) match match with garmin sport id {garmin_sport_id}"
+                    f"Skiing (Alpine) match with garmin sport id {garmin_sport_id}"
                 )
                 return 9
             case 168 | 169 | 170 | 171 | 203 | 204:
@@ -108,24 +104,25 @@ class Sports:
                 204 reference backcountry_snowboarding
                 """
                 log.debug(
-                    f"Skiing (Cross Country) match match with garmin sport id {garmin_sport_id}"
+                    "Skiing (Cross Country) match"
+                    "with garmin sport id {garmin_sport_id}"
                 )
                 return 10
             # Mountaineering case
             case 37:
                 log.debug(
-                    f"Mountaineering match match with garmin sport id {garmin_sport_id}"
+                    f"Mountaineering match with garmin sport id {garmin_sport_id}"
                 )
                 return 14
             # Open Water swimming case
             case 28:
                 log.debug(
-                    f"Open Water Swimming match match with garmin sport id {garmin_sport_id}"
+                    f"Open Water Swimming match with garmin sport id {garmin_sport_id}"
                 )
                 return 16
             # Trail case
             case 6:
-                log.debug(f"Trail match match with garmin sport id {garmin_sport_id}")
+                log.debug(f"Trail match with garmin sport id {garmin_sport_id}")
                 return 8
             # Rowing case
             case 32 | 237:
@@ -133,7 +130,7 @@ class Sports:
                 32 reference indoor_rowing
                 237 reference rowing_v2
                 """
-                log.debug(f"Rowing match match with garmin sport id {garmin_sport_id}")
+                log.debug(f"Rowing match with garmin sport id {garmin_sport_id}")
                 return 11
             case _:
                 log.error(
