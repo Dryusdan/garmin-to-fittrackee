@@ -8,12 +8,16 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [python3.12, python3.11]
+        os:
+          - python3.12
+          - python3.11
     runs-on: ${{ matrix.os }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: ls
-        run: ls
+      - name: Install test programm
+        run: poetry install --with test
+      - name: Run unit test
+        run: poetry run pytest
