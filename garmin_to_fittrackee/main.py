@@ -25,7 +25,7 @@ app.add_typer(setup, name="setup")
 
 if Path(f"{config_path}/config.yml").is_file():
     log.debug("Import config")
-    with open(f"{config_path}/config.yml", "r") as file:
+    with open(f"{config_path}/config.yml") as file:
         config = yaml.safe_load(file)
 
     db = sqlite3.connect(f"{config['sqlite']['path']}/db.sqlite3")
@@ -36,7 +36,10 @@ def sync(
     start_year: Annotated[
         int,
         typer.Option(
-            help="Year of your first record. Only used when no workouts found on Fittrackee."
+            help=(
+                "Year of your first record."
+                "Only used when no workouts found on Fittrackee."
+            )
         ),
     ] = None,
     interactive: Annotated[
@@ -64,16 +67,19 @@ def sync(
             log.info(f"Okay, fetching activity on Garmin from year {start_year}")
         elif not interactive and start_year is not None:
             log.warning(
-                f"No workout present on Fittrackee. Fetch all workouts on Garmin from year {start_year}"
+                "No workout present on Fittrackee."
+                f"Fetch all workouts on Garmin from year {start_year}"
             )
         else:
             log.error(
-                "Not workout found on Fittrackee and --no-interactive set. Please specify a year to start with --start-year"
+                "Not workout found on Fittrackee and --no-interactive set."
+                "Please specify a year to start with --start-year"
             )
             raise typer.Exit(code=1)
         if start_year < 1990:
             log.error(
-                "Garmin was created at the end of the year 1989 only for US army. I'm sure you don't have GPX file from this date"
+                "Garmin was created at the end of the year 1989 only for US army."
+                "I'm sure you don't have GPX file from this date"
             )
             raise typer.Exit(code=1)
         start_datetime = pendulum.datetime(start_year, 1, 1, 0, 0, 0)
@@ -89,7 +95,9 @@ def sync(
     )
     while today.diff(start_datetime, False).in_seconds() < 0:
         log.info(
-            f"Fetching activities on Garmin from {start_datetime.to_formatted_date_string()} to {end_datetime.to_formatted_date_string()}"
+            "Fetching activities on Garmin"
+            f"from {start_datetime.to_formatted_date_string()}"
+            f"to {end_datetime.to_formatted_date_string()}"
         )
         activities = garmin.get_activities_by_date(
             start_datetime.isoformat(), end_datetime.isoformat()
@@ -98,7 +106,8 @@ def sync(
             for activity in activities:
                 cur = db.cursor()
                 res = cur.execute(
-                    f"SELECT garmin_id FROM activities_ids WHERE garmin_id='{activity['activityId']}'"
+                    "SELECT garmin_id FROM activities_ids"
+                    f"WHERE garmin_id='{activity['activityId']}'"
                 )
                 if res.fetchone() is not None:
                     continue
@@ -124,12 +133,14 @@ def sync(
                             "Adding workout and activity matches in tool database"
                         )
                         log.debug(
-                            f"Using Fittrackee ID {workout.id} and Garmin ID {activity['activityId']}"
+                            f"Using Fittrackee ID {workout.id}"
+                            f"and Garmin ID {activity['activityId']}"
                         )
                         data_insert = (workout.id, activity["activityId"])
                         cur = db.cursor()
                         cur.execute(
-                            "INSERT INTO activities_ids (fittrackee_id, garmin_id) VALUES(?, ?)",
+                            "INSERT INTO activities_ids (fittrackee_id, garmin_id)"
+                            "VALUES(?, ?)",
                             data_insert,
                         )
                         db.commit()
@@ -157,7 +168,10 @@ def reset(
     db.commit()
     cur = db.cursor()
     cur.execute(
-        "CREATE TABLE activities_ids(fittrackee_id VARCHAR(255) UNIQUE, garmin_id INTEGER(100) UNIQUE)"
+        "CREATE TABLE"
+        "activities_ids(fittrackee_id VARCHAR(255) UNIQUE,"
+        "garmin_id INTEGER(100) UNIQUE"
+        ")"
     )
     db.commit()
     fittrackee = Fittrackee(config_path)
@@ -213,7 +227,10 @@ def fittrackee(
     fittrackee_domain: Annotated[
         str,
         typer.Option(
-            help="Domain of Fittrackee instance (must be in htttps). If not specify, we use prompt."
+            help=(
+                "Domain of Fittrackee instance (must be in htttps)."
+                "If not specify, we use prompt."
+            )
         )
         == "",
         typer.Option(prompt=True),
@@ -255,7 +272,9 @@ def config_tool(
     db = sqlite3.connect(f"{database_path}/db.sqlite3")
     cur = db.cursor()
     cur.execute(
-        "CREATE TABLE activities_ids(fittrackee_id VARCHAR(255) UNIQUE, garmin_id INTEGER(100) UNIQUE)"
+        "CREATE TABLE"
+        "activities_ids(fittrackee_id VARCHAR(255) UNIQUE,"
+        "garmin_id INTEGER(100) UNIQUE)"
     )
 
 
@@ -266,7 +285,9 @@ def config_exists():
         or not Path(f"{config_path}/config.yml").is_file()
     ):
         log.error(
-            "Config files aren't present. Start using garmin-to-fittrackee with `setup config-tool`, `setup garmin` and `setup fittrackee` command"
+            "Config files aren't present."
+            "Start using garmin-to-fittrackee with `setup config-tool`,"
+            "`setup garmin` and `setup fittrackee` command"
         )
         return False
     else:

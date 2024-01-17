@@ -56,15 +56,17 @@ class Fittrackee:
 
     def load_config(self):
         if Path(f"{self.config_path}/fittrackee.yml").is_file():
-            with open(f"{self.config_path}/fittrackee.yml", "r") as stream:
+            with open(f"{self.config_path}/fittrackee.yml") as stream:
                 try:
                     config = yaml.load(stream, Loader=yaml.Loader)
                 except yaml.YAMLError as exc:
                     log.error(
-                        "Can't load configuration. Please check {self.config_path}/fittrackee.yml or remove this file"
+                        "Can't load configuration."
+                        "Please check {self.config_path}/fittrackee.yml"
+                        "or remove this file"
                     )
                     log.error(exc)
-                    raise typer.Exit(code=1)
+                    raise typer.Exit(code=1) from None
 
             self.tokens = config["tokens"]
             self.client_id = config["fittrackee"]["client_id"]
@@ -97,7 +99,8 @@ class Fittrackee:
         authorization_url, state = oauth.authorization_url(authorize_url)
         print(f"Please go to {authorization_url} and authorize access.\n")
         authorization_response = typer.prompt(
-            "Enter the full callback URL from the browser address bar after you are redirected and press <enter>"
+            "Enter the full callback URL from the browser address bar"
+            "after you are redirected and press <enter>"
         )
         log.debug("Logging to fittrackee instance")
         self.tokens = oauth.fetch_token(
@@ -135,16 +138,13 @@ class Fittrackee:
             f"{self.api_url}/workouts", params={"per_page": 1, "page": 1}
         )
         results = r.json()
-        if (
+        return (
             len(results["data"]["workouts"]) == 0
             and results["pagination"]["has_next"] is False
             and results["pagination"]["has_prev"] is False
             and results["pagination"]["pages"] == 0
             and results["pagination"]["total"] == 0
-        ):
-            return False
-        else:
-            return True
+        )
 
     def get_all_workouts(self, pagination: int = 50):
         workouts = []
@@ -162,10 +162,11 @@ class Fittrackee:
                 error_code = error.response.status_code
                 log.debug(error.response.headers)
                 log.error(
-                    f"Failed to get all workouts. Return code {error_code}. Error {error.response.text}"
+                    "Failed to get all workouts."
+                    f"Return code {error_code}. Error {error.response.text}"
                 )
                 return
-            except requests.RequestException:
+            except requests.RequestException as e:
                 log.error(str(e))
                 return
             results = r.json()
@@ -191,10 +192,11 @@ class Fittrackee:
             error_code = error.response.status_code
             log.debug(error.response.headers)
             log.error(
-                f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
+                "Failed to get workout."
+                f"Return code {error_code}. Error {error.response.text}"
             )
             return
-        except requests.RequestException:
+        except requests.RequestException as e:
             log.error(str(e))
             return
         results = r.json()
@@ -219,7 +221,7 @@ class Fittrackee:
         try:
             r = self.client.post(
                 f"{self.api_url}/workouts",
-                files=dict(file=open(gpx_file, "r")),
+                files=dict(Path(gpx_file).read_text()),
                 data=dict(data=json.dumps(data)),
             )
             r.raise_for_status()
@@ -227,7 +229,8 @@ class Fittrackee:
             error_code = error.response.status_code
             log.debug(error.response.headers)
             log.error(
-                f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
+                f"Failed to post {gpx_file}."
+                f"Return code {error_code}. Error {error.response.text}"
             )
             return
         except requests.RequestException as e:
@@ -257,7 +260,8 @@ class Fittrackee:
             error_code = error.response.status_code
             log.debug(error.response.headers)
             log.error(
-                f"Failed to post {gpx_file}. Return code {error_code}. Error {error.response.text}"
+                "Failed to get sports's list."
+                f"Return code {error_code}. Error {error.response.text}"
             )
             return
         except requests.RequestException as e:

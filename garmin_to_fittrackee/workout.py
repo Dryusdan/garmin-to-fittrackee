@@ -1,11 +1,3 @@
-from pathlib import Path
-
-import pendulum
-import typer
-import yaml
-from requests_oauthlib import OAuth2Session
-from rich import print
-
 from garmin_to_fittrackee.logs import Log
 
 log = Log(__name__)
@@ -13,6 +5,7 @@ log = Log(__name__)
 
 class Workout:
     def __init__(
+        self,
         ascent: float,
         ave_speed: float,
         bounds: list,
