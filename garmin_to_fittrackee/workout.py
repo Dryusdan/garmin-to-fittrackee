@@ -1,11 +1,12 @@
-import typer
-import pendulum
-import yaml
+from pathlib import Path
 
-from garmin_to_fittrackee.logs import Log
+import pendulum
+import typer
+import yaml
 from requests_oauthlib import OAuth2Session
 from rich import print
-from pathlib import Path
+
+from garmin_to_fittrackee.logs import Log
 
 log = Log(__name__)
 

@@ -1,4 +1,5 @@
 import pytest
+
 from garmin_to_fittrackee.sports import Sports
 
 

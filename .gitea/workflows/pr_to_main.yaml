@@ -37,8 +37,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install check program
         run: poetry install --with dev
-      #- name: Run isort check
-      #  run: poetry run isort --recursive . --check-only
+      - name: Run isort check
+        run: poetry run isort --recursive . --check-only
       #- name: Run ruff check
       #  run: poetry run ruff check . --exit-non-zero-on-fix
       #- name: Run ruff formatter
