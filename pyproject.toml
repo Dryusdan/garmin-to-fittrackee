@@ -28,6 +28,10 @@ isort = "^5.13.2"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.4"
+pytest-mock = "^3.12.0"
+requests-mock = "^1.11.0"
+pytest-cov = "^4.1.0"
+coverage = {extras = ["toml"], version = "^7.4.0"}
 
 [[tool.poetry.source]]
 name = "gitea"
@@ -56,3 +60,10 @@ select = [
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]
+[tool.coverage.report]
+fail_under = 90

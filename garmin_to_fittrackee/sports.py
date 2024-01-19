@@ -50,10 +50,9 @@ class Sports:
                 )
                 return 13
             # Running cases
-            case 1 | 6 | 7 | 8 | 18 | 153 | 154 | 156 | 181:
+            case 1 | 7 | 8 | 18 | 153 | 154 | 156 | 181:
                 """
                 1 reference running
-                6 reference trail_running
                 7 reference street_running
                 8 reference track_running
                 18 reference treadmill_running

@@ -1,0 +1,6 @@
+---
+log:
+  level: DEBUG
+sqlite:
+  path: /home/test/garmin_to_fittrackee
+  use: true

@@ -10,8 +10,9 @@ config_path = f"{home}/.config/garmin-to-fittrackee"
 
 class Log:
     def __new__(self, name: str = "default", level: str = None):
-        if Path(f"{config_path}/config.yml").is_file():
-            with open(f"{config_path}/config.yml") as file:
+        config_file = Path(f"{config_path}/config.yml")
+        if config_file.exists() and config_file.is_file():
+            with config_file.open("r", encoding="utf-8") as file:
                 config = yaml.safe_load(file)
             if (
                 config is not None

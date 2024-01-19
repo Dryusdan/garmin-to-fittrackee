@@ -57,9 +57,11 @@ class Workout:
         self.with_gpx: bool = with_gpx
         self.workout_date: str = workout_date
         self.modification_date: str = modification_date
+        self.present_in_fittrackee: bool = False
+        self.present_in_garmin: bool = False
 
-    def present_in_fittrackee(self):
+    def set_present_in_fittrackee(self):
         self.present_in_fittrackee = True
 
-    def present_in_garmin(self):
+    def set_present_in_garmin(self):
         self.present_in_garmin = True

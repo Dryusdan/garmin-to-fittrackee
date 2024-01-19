@@ -106,7 +106,8 @@ def sync(
             for activity in activities:
                 cur = db.cursor()
                 res = cur.execute(
-                    "SELECT garmin_id FROM activities_ids"
+                    f"SELECT garmin_id "
+                    f"FROM activities_ids "
                     f"WHERE garmin_id='{activity['activityId']}'"
                 )
                 if res.fetchone() is not None:
@@ -176,8 +177,9 @@ def reset(
     db.commit()
     fittrackee = Fittrackee(config_path)
     workouts = fittrackee.get_all_workouts()
-    for workout in workouts:
-        fittrackee.delete_workout(workout.id)
+    if workouts:
+        for workout in workouts:
+            fittrackee.delete_workout(workout.id)
 
 
 @setup.command()
@@ -272,7 +274,7 @@ def config_tool(
     db = sqlite3.connect(f"{database_path}/db.sqlite3")
     cur = db.cursor()
     cur.execute(
-        "CREATE TABLE"
+        "CREATE TABLE "
         "activities_ids(fittrackee_id VARCHAR(255) UNIQUE,"
         "garmin_id INTEGER(100) UNIQUE)"
     )

@@ -1,0 +1,22 @@
+---
+fittrackee:
+  client_id: xu6ohshohhi8mequai5tho3Foh8EeV
+  client_secret: nique6uHie9he4lee6Zi7At9maith8eup9fahHu3eewieQu6zie0iP1saek
+  host: dev.localhost.tld
+tokens: !!python/object/new:oauthlib.oauth2.rfc6749.tokens.OAuth2Token
+  dictitems:
+    access_token: hoh2eu6eikee6Aisi1beez5ue5FieJohn4oeyoo3re2maic7Mee4Phohloo
+    expires_at: 1705946492.499581
+    expires_in: 864000
+    refresh_token: ihee2ieyaidoongoht1Agoo3thaiw9oWaeko5iePhei1Io4ooro6xieh8Pu
+    scope:
+    - workouts:read
+    - workouts:write
+    - profile:read
+    token_type: Bearer
+  state:
+    _new_scope: &id001 !!set
+      profile:read: null
+      workouts:read: null
+      workouts:write: null
+    _old_scope: *id001

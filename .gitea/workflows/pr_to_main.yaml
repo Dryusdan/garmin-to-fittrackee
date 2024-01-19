@@ -58,4 +58,4 @@ jobs:
       - name: Install test programm
         run: poetry install --with test
       - name: Run unit test
-        run: poetry run pytest
+        run: poetry run pytest --cov=.

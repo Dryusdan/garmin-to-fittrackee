@@ -1,0 +1,38 @@
+{
+    "data": {
+        "workouts": [
+            {
+                "ascent": 145.36,
+                "ave_speed": 33.82,
+                "bounds": [63.006111178547144, 7.293513799086213, 63.022289257496595, 7.426094049587846],
+                "creation_date": "Fri, 19 Jan 2024 16:38:21 GMT",
+                "descent": 130.56,
+                "distance": 13.115,
+                "duration": "0:28:31",
+                "id": "FP7GSqqbkuCxTaA5CZ6B7D",
+                "map": "e6bd2f3a20b27a7b64c53df66dbc15d3",
+                "max_alt": 46.4,
+                "max_speed": 40.42,
+                "min_alt": 10.0,
+                "modification_date": "null",
+                "moving": "0:23:16",
+                "next_workout": "h8NmQE4cWLxdDER2XSxeTA",
+                "notes": "",
+                "pauses": "null",
+                "previous_workout": "h8NmQE4cWLxdDER2XSxeTA",
+                "records": [],
+                "segments": [
+                    {"ascent": 145.36, "ave_speed": 33.82, "descent": 130.56, "distance": 13.115, "duration": "0:28:31", "max_alt": 46.4, "max_speed": 40.42, "min_alt": 10.0, "moving": "0:23:16", "pauses": "null", "segment_id": 0, "workout_id": "FP7GSqqbkuCxTaA5CZ6B7D"}
+                ],
+                "sport_id": 13,
+                "title": "Atlanterhavsvegen Sunset",
+                "user": "Dryusdan",
+                "weather_end": "null",
+                "weather_start": "null",
+                "with_gpx": true,
+                "workout_date": "Fri, 31 Dec 2021 23:01:27 GMT"
+            }
+        ]
+    },
+    "status": "created"
+}

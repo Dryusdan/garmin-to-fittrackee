@@ -37,10 +37,10 @@ class Fittrackee:
             dt = pendulum.now()
             timezone = dt.timezone.name
         self.timezone = timezone
-        self.load_config()
-        self.client = self.auth()
+        self.__load_config()
+        self.client = self.__auth()
 
-    def save_config(self):
+    def __save_config(self):
         log.debug("Saving data")
         data = {
             "fittrackee": {
@@ -50,16 +50,18 @@ class Fittrackee:
             },
             "tokens": self.tokens,
         }
-        with open(f"{self.config_path}/fittrackee.yml", "w") as file:
+        fittrackee_config = Path(f"{self.config_path}/fittrackee.yml")
+        with fittrackee_config.open("w", encoding="utf-8") as file:
             yaml.dump(data, file, default_flow_style=False)
         return
 
-    def load_config(self):
-        if Path(f"{self.config_path}/fittrackee.yml").is_file():
-            with open(f"{self.config_path}/fittrackee.yml") as stream:
+    def __load_config(self):
+        fittrackee_config = Path(f"{self.config_path}/fittrackee.yml")
+        if fittrackee_config.is_file():
+            with fittrackee_config.open() as stream:
                 try:
                     config = yaml.load(stream, Loader=yaml.Loader)
-                except yaml.YAMLError as exc:
+                except (yaml.YAMLError, yaml.scanner.ScannerError) as exc:
                     log.error(
                         "Can't load configuration."
                         "Please check {self.config_path}/fittrackee.yml"
@@ -74,7 +76,7 @@ class Fittrackee:
             self.host = config["fittrackee"]["host"]
             self.api_url = f"https://{self.host}/api"
 
-    def auth(self):
+    def __auth(self):
         """
         Checks if a valid access token exists in the token file;
         if not, tries to get a new one via a refresh token (if present)
@@ -84,12 +86,12 @@ class Fittrackee:
         log.debug("Setting up FitTrackee auth")
         if self.tokens is None:
             log.debug("No FitTrackee tokens found; fetching new ones")
-            return self.web_application_flow()
+            return self.__web_application_flow()
         else:
             log.debug("Using existing FitTrackee tokens with self-refreshing client")
-            return self.get_refreshing_client()
+            return self.__get_refreshing_client()
 
-    def web_application_flow(self):
+    def __web_application_flow(self):
         authorize_url = f"https://{self.host}/profile/apps/authorize"
         self.api_url = f"https://{self.host}/api"
 
@@ -102,6 +104,7 @@ class Fittrackee:
             "Enter the full callback URL from the browser address bar"
             "after you are redirected and press <enter>"
         )
+        print(authorization_response)
         log.debug("Logging to fittrackee instance")
         self.tokens = oauth.fetch_token(
             f"{self.api_url}/oauth/token",
@@ -111,10 +114,10 @@ class Fittrackee:
             verify=True,
         )
         log.info("Logging successfull. Saving configuration")
-        self.save_config()
+        self.__save_config()
         return oauth
 
-    def get_refreshing_client(self):
+    def __get_refreshing_client(self):
         refresh_params = {
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -124,19 +127,32 @@ class Fittrackee:
             token=self.tokens,
             auto_refresh_url=f"{self.api_url}/oauth/token",
             auto_refresh_kwargs=refresh_params,
-            token_updater=self.token_update,
+            token_updater=self.__token_update,
         )
         return client
 
-    def token_update(self, token):
+    def __token_update(self, token):
         log.debug("New token receive. Save it")
         self.tokens = token
-        self.save_config()
+        self.__save_config()
 
     def is_workout_present(self):
-        r = self.client.get(
-            f"{self.api_url}/workouts", params={"per_page": 1, "page": 1}
-        )
+        try:
+            r = self.client.get(
+                f"{self.api_url}/workouts", params={"per_page": 1, "page": 1}
+            )
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            log.error(
+                "Failed to get all workouts."
+                f"Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
         results = r.json()
         return (
             len(results["data"]["workouts"]) == 0
@@ -173,7 +189,7 @@ class Fittrackee:
             for workout in results["data"]["workouts"]:
                 workout_object = object.__new__(Workout)
                 workout_object.__dict__ = workout
-                workout_object.present_in_fittrackee()
+                workout_object.set_present_in_fittrackee()
                 workouts.append(workout_object)
             log.debug(
                 f"Fetched page {page} of workouts " f"(fetched {len(workouts)} so far)"
@@ -203,7 +219,7 @@ class Fittrackee:
         for workout in results["data"]["workouts"]:
             workout_object = object.__new__(Workout)
             workout_object.__dict__ = workout
-            workout_object.present_in_fittrackee()
+            workout_object.set_present_in_fittrackee()
             return workout_object
 
     def upload_gpx(self, gpx_file: Union[str, Path], sport_id: int, notes: str = None):
@@ -218,10 +234,11 @@ class Fittrackee:
         #    gpx = gpxpy.parse(f)
         log.debug(f"posting {gpx_file} to FitTrackee")
         data = {"sport_id": sport_id, "notes": ""}
+        gpx = Path(gpx_file)
         try:
             r = self.client.post(
                 f"{self.api_url}/workouts",
-                files=dict(Path(gpx_file).read_text()),
+                files=dict(file=gpx.open("rb")),
                 data=dict(data=json.dumps(data)),
             )
             r.raise_for_status()
@@ -239,8 +256,8 @@ class Fittrackee:
         results = r.json()
         workout = object.__new__(Workout)
         workout.__dict__ = results["data"]["workouts"][0]
-        workout.present_in_fittrackee()
-        workout.present_in_garmin()
+        workout.set_present_in_fittrackee()
+        workout.set_present_in_garmin()
         log.info(f"Activity added on Fittrackee with id {workout.id}")
         return workout
 
