@@ -11,7 +11,7 @@ packages = [{include = "garmin_to_fittrackee"}]
 garmin2fittrackee = "garmin_to_fittrackee.main:app"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 typer = {extras = ["all"], version = "^0.9.0"}
 garminconnect = "^0.2.12"
 pendulum = "^3.0.0"
