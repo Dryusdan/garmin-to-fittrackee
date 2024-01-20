@@ -11,6 +11,7 @@ jobs:
         os:
           - python3.12
           - python3.11
+          - python3.10
     runs-on: ${{ matrix.os }}
     steps:
       - name: Clone repository
