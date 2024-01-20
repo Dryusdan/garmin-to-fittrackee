@@ -285,3 +285,33 @@ class Fittrackee:
             log.error(str(e))
             return
         log.warning(f"Workout {workout_id} deleted")
+
+    @staticmethod
+    def get_instance_config(host: str):
+        try:
+            r = requests.get(f"https://{host}/api/config")
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            log.error(
+                "Failed to get instance config."
+                f"Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
+        return r.json()
+
+    @staticmethod
+    def is_instance_is_supported():
+        supported_instance_versions = ["0.7.29"]
+        config = Fittrackee.get_instance_config()
+        if not (
+            "data" in config
+            and "version" in config["data"]
+            and config["data"]["version"] in supported_instance_versions
+        ):
+            return False
+        return True

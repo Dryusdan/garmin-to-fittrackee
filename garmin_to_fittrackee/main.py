@@ -242,6 +242,12 @@ def fittrackee(
     if force:
         log.warning("Rewrite configuration file")
         Path(f"{config_path}/fittrackee.yml").unlink(missing_ok=True)
+    if not Fittrackee.is_instance_is_supported(host=fittrackee_domain):
+        log.error(
+            "Fittrackee instance isn't supported. "
+            "Please update your Fittrackee instance"
+        )
+        raise typer.Exit(code=1)
     Fittrackee(
         config_path=config_path,
         client_id=client_id,
