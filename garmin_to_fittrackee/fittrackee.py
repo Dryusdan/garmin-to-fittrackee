@@ -305,9 +305,9 @@ class Fittrackee:
         return r.json()
 
     @staticmethod
-    def is_instance_is_supported():
+    def is_instance_is_supported(host: str):
         supported_instance_versions = ["0.7.29"]
-        config = Fittrackee.get_instance_config()
+        config = Fittrackee.get_instance_config(host=host)
         if not (
             "data" in config
             and "version" in config["data"]
