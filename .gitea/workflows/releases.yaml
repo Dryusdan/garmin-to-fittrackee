@@ -56,8 +56,8 @@ jobs:
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
-          bump=$(git show --summary --oneline --pretty=format:"%s" | cut -d "[" -f2 | cut -d "]" -f1)
-          git show --summary --oneline --pretty=format:"%s"
+          bump=$(git log --oneline --pretty=format:"%s" | cut -d "[" -f2 | cut -d "]" -f1)
+          git log --oneline --pretty=format:"%s"
           echo "bump version is ${bump}"
           echo "Only this version"
           poetry version ${bump}
