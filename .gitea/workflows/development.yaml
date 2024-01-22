@@ -20,12 +20,6 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: test
-        run: |
-          ls
-          pwd
-          git status
-          git branch
       - name: Install test programm
         run: poetry install --with test
       - name: Run unit test
