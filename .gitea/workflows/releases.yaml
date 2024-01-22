@@ -78,9 +78,9 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
           ref: main
-        - name: Rebase ${{ inputs.branch }}
-          uses: martincostello/rebaser@v1
-          with:
-            branch: main
-            user-email: ${{ env.CI_COMMIT_EMAIL }}
-            user-name: ${{ env.CI_COMMIT_AUTHOR }}
+      - name: Rebase ${{ inputs.branch }}
+        uses: martincostello/rebaser@v1
+        with:
+          branch: main
+          user-email: ${{ env.CI_COMMIT_EMAIL }}
+          user-name: ${{ env.CI_COMMIT_AUTHOR }}
