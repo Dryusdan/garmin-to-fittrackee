@@ -1,0 +1,71 @@
+---
+name: Prepare releases
+run-name: Prepare_releases
+on:
+  pull_request:
+    branches:
+      - stable
+    paths-ignore:
+      - 'coverage.json'
+      - 'pyproject.toml'
+  push:
+    branches:
+      - stable
+    paths-ignore:
+      - 'coverage.json'
+      - 'pyproject.toml'
+
+jobs:
+  coverage:
+    runs-on: python3.12
+    env:
+      CI_COMMIT_MESSAGE: "[chore] Update coverage.json"
+      CI_COMMIT_AUTHOR: gitea-actions-bot
+      CI_COMMIT_EMAIL: gitea-actions-bot@dryusdan.fr
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
+          ref: main
+      # Set environment variable "is-auto-commit"
+      - name: Set environment variable "is-auto-commit"
+        run: |
+          if git show --summary --oneline --pretty=format:"%an" | grep -q ${{ env.CI_COMMIT_AUTHOR }}
+          then
+            if git show --summary --oneline --pretty=format:"%s" | grep -q ${{ env.CI_COMMIT_MESSAGE }}
+            then
+              echo "is-auto-commit=true" >> $GITHUB_ENV
+            else
+              echo "is-auto-commit=false" >> $GITHUB_ENV
+            fi
+          else
+            echo "is-auto-commit=false" >> $GITHUB_ENV
+          fi
+      - name: Install tests dependencies
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        run: poetry install --with test
+      - name: Generate coverage.json
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        run: poetry run pytest --cov=. --cov-report json
+      - name: Commit and push
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
+          bump=$(echo ${{ github.event.pull_request.title }} | cut -d "[" -f2 | cut -d "]" -f1)
+          echo "bump version is ${bump}"
+          poetry version ${bump}
+          git add pyproject.toml
+          git commit -m "Bump poetry package version"
+          git add coverage.json
+          git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+          git push
+      - name: Deploy new package on repository
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        run: |
+          poetry config http-basic.gitea ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
+          poetry publish --build --repository gitea

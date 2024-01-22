@@ -1,11 +1,15 @@
-name: Test the push
-run-name: pushtest
+---
+name: Development code quality
+run-name: testdev
 on:
   push:
     branches-ignore:
+      - stable
       - main
+    paths-ignore:
+      - coverage.json
 jobs:
-  test:
+  run-unittest:
     strategy:
       matrix:
         os:
@@ -16,8 +20,12 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+      - name: test
+        run: |
+          ls
+          pwd
+          git status
+          git branch
       - name: Install test programm
         run: poetry install --with test
       - name: Run unit test

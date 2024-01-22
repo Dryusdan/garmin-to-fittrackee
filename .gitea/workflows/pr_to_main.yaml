@@ -1,6 +1,6 @@
 ---
-name: Test PR validity
-run-name: PRtest
+name: Code quality
+run-name: Codequality
 on:
   pull_request:
     types:
@@ -8,8 +8,13 @@ on:
       - edited
       - reopened
       - synchronize
+    branches:
+      - main
+    paths-ignore:
+      - coverage.json
+
 jobs:
-  build:
+  build-program:
     strategy:
       matrix:
         os:
@@ -24,12 +29,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Build wheel package
         run: poetry build
-  check:
+  run-code-formatters:
     strategy:
       matrix:
         os:
           - python3.12
           - python3.11
+          - python3.10
     runs-on: ${{ matrix.os }}
     steps:
       - name: Clone repository
@@ -44,19 +50,20 @@ jobs:
         run: poetry run ruff check . --exit-non-zero-on-fix
       - name: Run ruff formatter
         run: poetry run ruff format . --check
-  test:
+  run-unittest:
     strategy:
       matrix:
         os:
           - python3.12
           - python3.11
+          - python3.10
     runs-on: ${{ matrix.os }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Install test programm
+      - name: Install test program
         run: poetry install --with test
       - name: Run unit test
         run: poetry run pytest --cov=.

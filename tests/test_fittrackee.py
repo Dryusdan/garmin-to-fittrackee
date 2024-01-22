@@ -6,20 +6,18 @@ import pytest
 import requests
 import requests_mock
 import typer
+import yaml
 
 from garmin_to_fittrackee.fittrackee import Fittrackee
 
-config_yaml = """
-log:
-  level: DEBUG
-sqlite:
-  path: /home/dryusdan/.local/share/garmin_to_fittrackee
-  use: true
-"""
+config_fittrackee_yaml = Path(f"{Path().resolve()}/tests/files/config_fittrackee.yaml")
 
-config_fittrackee_yaml = Path(
-    f"{Path().resolve()}/tests/files/config_fittrackee.yaml"
-).read_text()
+expire_at = pendulum.now().add(days=7)
+with config_fittrackee_yaml.open() as stream:
+    data = yaml.load(stream, Loader=yaml.Loader)
+data["tokens"]["expires_at"] = expire_at.timestamp()
+
+config_fittrackee_yaml = yaml.dump(data)
 
 
 @pytest.fixture
@@ -273,3 +271,64 @@ def test_upload_connection_error(mocker, fittrackee):
 #        "token_type": "Bearer",
 #    }
 #    fittrackee.__token_update(token)
+get_instance_config_response = Path(
+    f"{Path().resolve()}/tests/files/get_config.json"
+).read_text()
+
+
+def test_get_instance_config(fittrackee):
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://dev.localhost.tld/api/config",
+            text=get_instance_config_response,
+            status_code=200,
+        )
+        config = fittrackee.get_instance_config(host="dev.localhost.tld")
+        assert config["data"]["version"] == "0.7.29"
+
+
+def test_get_instance_config_http_error(fittrackee):
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://dev.localhost.tld/api/config",
+            status_code=500,
+        )
+        config = fittrackee.get_instance_config(host="dev.localhost.tld")
+        assert config is None
+
+
+def test_get_instance_config_connection_error(fittrackee):
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://dev.localhost.tld/api/config",
+            exc=requests.exceptions.ConnectionError(),
+        )
+        config = fittrackee.get_instance_config(host="dev.localhost.tld")
+        assert config is None
+
+
+def test_is_instance_is_supported():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://dev.localhost.tld/api/config",
+            text=get_instance_config_response,
+            status_code=200,
+        )
+        is_supported = Fittrackee.is_instance_is_supported(host="dev.localhost.tld")
+        assert is_supported is True
+
+
+get_instance_config_bad_response = Path(
+    f"{Path().resolve()}/tests/files/get_bad_config.json"
+).read_text()
+
+
+def test_is_instance_is_supported_bad_version():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://dev.localhost.tld/api/config",
+            text=get_instance_config_bad_response,
+            status_code=200,
+        )
+        is_supported = Fittrackee.is_instance_is_supported(host="dev.localhost.tld")
+        assert is_supported is False
