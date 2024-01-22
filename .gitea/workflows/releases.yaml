@@ -1,0 +1,36 @@
+---
+name: Prepare releases
+run-name: Prepare_releases
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+    branches:
+      - stable
+    paths-ignore:
+      - 'coverage.json'
+jobs:
+  coverage:
+    permissions:
+      contents: write
+    runs-on: python3.12
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install for coverage
+        run: poetry install --with test
+      - name: Run coverage test
+        run: poetry run pytest --cov=. --cov-report json
+      - name: Commit and push
+        users: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: '[chore] Update coverage.json'
+          file_pattern: 'coverage.json'
+          commit_user_name: 'gitea-actions[bot]'
+          commit_user_email: 'gitea-actions[bot]@git.dryusdan.fr'
+          commit_author: Dryusdan <contact@dryusdan.fr>

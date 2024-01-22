@@ -8,6 +8,8 @@ on:
       - edited
       - reopened
       - synchronize
+    paths-ignore:
+      - 'coverage.json'
 jobs:
   build:
     strategy:
@@ -30,6 +32,7 @@ jobs:
         os:
           - python3.12
           - python3.11
+          - python3.10
     runs-on: ${{ matrix.os }}
     steps:
       - name: Clone repository
@@ -50,6 +53,7 @@ jobs:
         os:
           - python3.12
           - python3.11
+          - python3.10
     runs-on: ${{ matrix.os }}
     steps:
       - name: Clone repository

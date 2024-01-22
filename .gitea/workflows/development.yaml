@@ -3,7 +3,10 @@ run-name: pushtest
 on:
   push:
     branches-ignore:
+      - stable
       - main
+    paths-ignore:
+      - 'coverage.json'
 jobs:
   test:
     strategy:
