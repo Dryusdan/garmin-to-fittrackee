@@ -71,16 +71,16 @@ jobs:
         run: |
           poetry config http-basic.gitea ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
           poetry publish --build --repository gitea
-      - name: Rebase main
+      - name: Clone repository
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
-        run: |
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
-          ref: stable
+          ref: main
       - name: Rebase main
-        uses: martincostello/rebaser@v1
-        with:
-          branch: main
-          user-email: ${{ env.CI_COMMIT_EMAIL }}
-          user-name: ${{ env.CI_COMMIT_AUTHOR }}
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
+          git rebase --force-rebase origin/stable
+          git push --force
