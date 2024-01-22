@@ -56,7 +56,7 @@ jobs:
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
-          bump=$(echo ${{ github.event.pull_request.title }} | cut -d "[" -f2 | cut -d "]" -f1)
+          bump=$(git show --summary --oneline --pretty=format:"%s" | cut -d "[" -f2 | cut -d "]" -f1)
           echo "bump version is ${bump}"
           poetry version ${bump}
           git add pyproject.toml
