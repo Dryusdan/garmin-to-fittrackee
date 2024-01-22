@@ -77,8 +77,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
-          ref: main
-      - name: Rebase ${{ inputs.branch }}
+          ref: stable
+      - name: Rebase main
         uses: martincostello/rebaser@v1
         with:
           branch: main
