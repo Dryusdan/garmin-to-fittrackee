@@ -58,6 +58,7 @@ jobs:
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           bump=$(git show --summary --oneline --pretty=format:"%s" | cut -d "[" -f2 | cut -d "]" -f1)
           echo "bump version is ${bump}"
+          echo "Only this version"
           poetry version ${bump}
           git add pyproject.toml
           git commit -m "Bump poetry package version"
