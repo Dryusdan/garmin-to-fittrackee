@@ -20,11 +20,6 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: "Configure cache repository"
-        run: |
-          poetry source add --priority=default PyPiCache https://pip.git.dryusdan.net/ci_poetry/stable
-          poetry config http-basic.foo ${{ secrets.PYPI_REPO_USER }} ${{ secrets.PYPI_REPO_PASSWORD }}
-          poetry lock --no-update
       - name: Install test programm
         run: poetry install --with test
       - name: Run unit test
