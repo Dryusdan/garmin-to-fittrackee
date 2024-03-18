@@ -162,7 +162,7 @@ class Fittrackee:
         log.debug(f"Pagination total : {results['pagination']['total']}")
         return (
             len(results["data"]["workouts"]) == 0
-            and results["pagination"]["has_next"] is False
+            and results["pagination"]["has_next"] is True
             and results["pagination"]["has_prev"] is False
             and results["pagination"]["pages"] == 0
             and results["pagination"]["total"] == 0
