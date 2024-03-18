@@ -154,6 +154,12 @@ class Fittrackee:
             log.error(str(e))
             return
         results = r.json()
+        log.debug(f"Workkouts: {results['data']['workouts']}")
+        log.debug(f"Count workkouts: {len(results['data']['workouts'])}")
+        log.debug(f"As next : {results['pagination']['has_next']}")
+        log.debug(f"As prev : {results['pagination']['has_prev']}")
+        log.debug(f"Pagination pages : {results['pagination']['pages']}")
+        log.debug(f"Pagination total : {results['pagination']['total']}")
         return (
             len(results["data"]["workouts"]) == 0
             and results["pagination"]["has_next"] is False
@@ -306,7 +312,7 @@ class Fittrackee:
 
     @staticmethod
     def is_instance_is_supported(host: str):
-        supported_instance_versions = ["0.7.29"]
+        supported_instance_versions = ["0.7.29", "v0.7.30", "v0.7.31", "v0.7.32"]
         config = Fittrackee.get_instance_config(host=host)
         if not (
             "data" in config
