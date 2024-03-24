@@ -156,17 +156,7 @@ class Fittrackee:
         results = r.json()
         log.debug(f"Workkouts: {results['data']['workouts']}")
         log.debug(f"Count workkouts: {len(results['data']['workouts'])}")
-        log.debug(f"As next : {results['pagination']['has_next']}")
-        log.debug(f"As prev : {results['pagination']['has_prev']}")
-        log.debug(f"Pagination pages : {results['pagination']['pages']}")
-        log.debug(f"Pagination total : {results['pagination']['total']}")
-        return (
-            len(results["data"]["workouts"]) == 0
-            and results["pagination"]["has_next"] is True
-            and results["pagination"]["has_prev"] is False
-            and results["pagination"]["pages"] == 0
-            and results["pagination"]["total"] == 0
-        )
+        return len(results["data"]["workouts"]) != 0
 
     def get_all_workouts(self, pagination: int = 50):
         workouts = []

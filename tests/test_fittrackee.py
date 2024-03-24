@@ -114,7 +114,7 @@ def test_is_workout_present(fittrackee):
             status_code=200,
         )
         workout = fittrackee.is_workout_present()
-        assert workout is False
+        assert workout is True
 
 
 def test_is_workout_present_http_error(fittrackee):
