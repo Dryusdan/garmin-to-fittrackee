@@ -57,6 +57,7 @@ jobs:
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           bump=$(git log --oneline --pretty=format:"%s" | cut -d "[" -f2 | cut -d "]" -f1)
+          if [[ "${bump}" = "patch" || "${bump}" = "minor" || "${bump}" = "major" ]]; then echo "OK"; else bump="patch"; fi
           git log --oneline --pretty=format:"%s"
           echo "bump version is ${bump}"
           echo "Only this version"
