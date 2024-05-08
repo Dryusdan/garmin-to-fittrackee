@@ -309,6 +309,7 @@ class Fittrackee:
             "0.7.32",
             "0.8.0",
             "0.8.1",
+            "0.8.2",
         ]
         config = Fittrackee.get_instance_config(host=host)
         if not (
