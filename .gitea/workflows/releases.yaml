@@ -64,7 +64,7 @@ jobs:
           poetry version ${bump}
           git add pyproject.toml
           git commit -m "Bump poetry package version"
-          git add coverage.json
+          git add -f coverage.json
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
       - name: Deploy new package on repository
