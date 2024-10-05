@@ -6,6 +6,7 @@ import pendulum
 import requests
 import typer
 import yaml
+from packaging.version import Version
 from requests_oauthlib import OAuth2Session
 from rich import print
 
@@ -302,21 +303,12 @@ class Fittrackee:
 
     @staticmethod
     def is_instance_is_supported(host: str):
-        supported_instance_versions = [
-            "0.7.29",
-            "0.7.30",
-            "0.7.31",
-            "0.7.32",
-            "0.8.0",
-            "0.8.1",
-            "0.8.2",
-            "0.8.3",
-        ]
         config = Fittrackee.get_instance_config(host=host)
         if not (
             "data" in config
             and "version" in config["data"]
-            and config["data"]["version"] in supported_instance_versions
+            and Version(config["data"]["version"]) > Version("0.7.29")
+            and Version(config["data"]["version"]) < Version("0.9")
         ):
             return False
         return True
