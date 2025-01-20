@@ -308,7 +308,7 @@ class Fittrackee:
             "data" in config
             and "version" in config["data"]
             and Version(config["data"]["version"]) >= Version("0.7.29")
-            and Version(config["data"]["version"]) < Version("0.9")
+            and Version(config["data"]["version"]) < Version("0.10")
         ):
             return False
         return True
