@@ -29,11 +29,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Build wheel package
-        run: poetry build
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry build
   run-code-formatters:
     strategy:
       matrix:
         os:
+          - python3.13
           - python3.12
           - python3.11
           - python3.10
@@ -44,7 +47,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install check program
-        run: poetry install --with dev
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with dev
       - name: Run isort check
         run: poetry run isort . --check-only
       - name: Run ruff check
@@ -55,6 +60,7 @@ jobs:
     strategy:
       matrix:
         os:
+          - python3.13
           - python3.12
           - python3.11
           - python3.10
@@ -65,6 +71,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install test program
-        run: poetry install --with test
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with test
       - name: Run unit test
         run: poetry run pytest --cov=.
