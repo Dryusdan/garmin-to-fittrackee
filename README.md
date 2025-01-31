@@ -41,7 +41,7 @@ In the "Add a new OAuth2 application" section; chose your `Application name`.
 
 To `application URL` and `Redirect URL` set this URL `https://localhost` (usefull for configuration, later in this README)/
 
-In Scope, check `profile:read`, `profile:write`, `workouts:write`.
+In Scope, check `profile:read`, `workouts:read`, `workouts:write`.
 
 After submit your application, an application ID and secret is displayed. These informatiuon is usefull for setting the CLI, note theses.
 And that all for Fittrackee.
@@ -67,6 +67,6 @@ The third command is used to setup fittrackee connection.
 garmin2fittrackee setup fittrackee
 ```
 
-The command ask your application ID, application secret, the domain of you're domain Fittrackee instance.
+The command ask your application ID, application secret, the domain of you're domain Fittrackee instance (without `https://`).
 
 Then the CLI will guide you through authorising the application to Fittrackee.
