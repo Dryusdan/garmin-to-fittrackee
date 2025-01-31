@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pendulum
 import typer
@@ -242,6 +243,9 @@ def fittrackee(
     if force:
         log.warning("Rewrite configuration file")
         Path(f"{config_path}/fittrackee.yml").unlink(missing_ok=True)
+    url = urlparse(fittrackee_domain)
+    if url.hostname:
+        fittrackee_domain = url.hostname
     if not Fittrackee.is_instance_is_supported(host=fittrackee_domain):
         log.error(
             "Fittrackee instance isn't supported. "
