@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         os:
+          - python3.13
           - python3.12
           - python3.11
           - python3.10
@@ -21,6 +22,8 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Install test programm
-        run: poetry install --with test
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with test
       - name: Run unit test
         run: poetry run pytest
