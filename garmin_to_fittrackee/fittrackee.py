@@ -305,7 +305,8 @@ class Fittrackee:
     def is_instance_is_supported(host: str):
         config = Fittrackee.get_instance_config(host=host)
         if not (
-            "data" in config
+            config
+            and "data" in config
             and "version" in config["data"]
             and Version(config["data"]["version"]) >= Version("0.7.29")
             and Version(config["data"]["version"]) < Version("0.10")
