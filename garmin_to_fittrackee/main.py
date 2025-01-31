@@ -230,7 +230,7 @@ def fittrackee(
         str,
         typer.Option(
             help=(
-                "Domain of Fittrackee instance (must be in htttps)."
+                "Domain of Fittrackee instance (without https)."
                 "If not specify, we use prompt."
             )
         )
