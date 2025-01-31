@@ -17,7 +17,7 @@ on:
 
 jobs:
   coverage:
-    runs-on: python3.12
+    runs-on: python3.13
     env:
       CI_COMMIT_MESSAGE: "[chore] Update coverage.json"
       CI_COMMIT_AUTHOR: gitea-actions-bot
@@ -47,7 +47,9 @@ jobs:
           fi
       - name: Install tests dependencies
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
-        run: poetry install --with test
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with test
       - name: Generate coverage.json
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: poetry run pytest --cov=. --cov-report json
