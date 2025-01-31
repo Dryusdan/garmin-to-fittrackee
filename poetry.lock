@@ -1176,4 +1176,8 @@ requests = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
+<<<<<<< HEAD
+content-hash = "5a478a8a10be147d5612d25be427dbc1d86aba37c6f2a7302fbdca06de50e96d"
+=======
 content-hash = "fee283d9752f1086cbdab3bcdcc7c4e12bd5ef20e7ed989bc4bda5a2e59d3b4d"
+>>>>>>> main
