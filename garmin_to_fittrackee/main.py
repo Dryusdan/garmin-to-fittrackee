@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 from urllib.parse import urlparse
@@ -13,13 +14,23 @@ from garmin_to_fittrackee.logs import Log
 from garmin_to_fittrackee.sports import Sports
 
 log = Log(name=__name__)
-home = str(Path.home())
 
 app = typer.Typer()
 
-config_path = f"{home}/.config/garmin-to-fittrackee"
-Path(config_path).mkdir(parents=True, exist_ok=True)
 
+def default_config_path():
+    home = str(Path.home())
+    return f"{home}/.config/garmin-to-fittrackee"
+
+
+def default_database_path():
+    home = str(Path.home())
+    return f"{home}/.local/share/garmin_to_fittrackee"
+
+
+config_path = os.environ.get("CONFIG_PATH", default_config_path())
+database_path = os.environ.get("DATABASE_PATH", default_database_path())
+Path(config_path).mkdir(parents=True, exist_ok=True)
 
 setup = typer.Typer()
 app.add_typer(setup, name="setup")
@@ -265,7 +276,7 @@ def config_tool(
     database_path: Annotated[
         str,
         typer.Option(help="Database location. If not exist, path will be created."),
-    ] = f"{home}/.local/share/garmin_to_fittrackee",
+    ] = database_path,
     verbose_level: Annotated[
         str,
         typer.Option(help="Verbose level. Maybe DEBUG, INFO, WARNING, ERROR, CRITICAL"),
