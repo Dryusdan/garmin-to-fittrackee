@@ -79,4 +79,6 @@ jobs:
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: |
           poetry config http-basic.gitea ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           poetry publish --build --repository gitea
+          poetry publish --build
