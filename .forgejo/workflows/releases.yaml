@@ -69,12 +69,6 @@ jobs:
           git add -f coverage.json
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
-          git fetch -ap
-          git checkout main
-          git pull
-          git merge stable
-          git commit -m "Rebase main from stable"
-          git push
       - name: Deploy new package on repository
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: |
