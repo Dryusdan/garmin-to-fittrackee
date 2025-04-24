@@ -22,9 +22,11 @@ def default_config_path():
     home = str(Path.home())
     return f"{home}/.config/garmin-to-fittrackee"
 
+
 def default_database_path():
     home = str(Path.home())
     return f"{home}/.local/share/garmin_to_fittrackee"
+
 
 config_path = os.environ.get("CONFIG_PATH", default_config_path())
 database_path = os.environ.get("DATABASE_PATH", default_database_path())
