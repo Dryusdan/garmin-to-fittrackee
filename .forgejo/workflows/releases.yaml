@@ -69,8 +69,16 @@ jobs:
           git add -f coverage.json
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
+          git checkout main
+          git fetch -ap
+          git pull
+          git merge stable
+          git commit -m "Rebase main from stable"
+          git push
       - name: Deploy new package on repository
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: |
           poetry config http-basic.gitea ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           poetry publish --build --repository gitea
+          poetry publish --build
