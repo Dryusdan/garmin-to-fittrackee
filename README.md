@@ -2,7 +2,9 @@
 
 A simple script to synchronize garmin to fittrackee. Inspired by https://github.com/jat255/strava-to-fittrackee
 
-![Dynamic JSON Badge](https://shields.dryusdan.net/badge/dynamic/json?url=https%3A%2F%2Fgit.dryusdan.fr%2FDryusdan%2Fgarmin-to-fittrackee%2Fraw%2Fbranch%2Fmain%2Fcoverage.json&query=%24.totals.percent_covered_display&suffix=%25&style=flat&label=Coverage&color=light-green)
+![A watch with an arrow to fitrackee icon and another arrow from fitrackee icon to watch](img/garmin-to-fittrackee.png)
+
+Thank to [https://github.com/Thovi98](Thovi98) for image.
 
 ## How to install it
 
@@ -14,7 +16,12 @@ This program is developed around Fittrackee v0.7.29 and work with it. It work on
 
 ### To install it
 
-With pipy, use git.dryusdan.fr repository.
+With official pypi :
+```bash
+pip install garmin-to-fittrackee
+```
+
+With git.dryusdan.fr pypi repository :
 ```bash
 pip install --upgrade --index-url https://git.dryusdan.fr/api/packages/Dryusdan/pypi/simple/ --extra-index-url https://pypi.python.org/simple garmin-to-fittrackee
 ```
