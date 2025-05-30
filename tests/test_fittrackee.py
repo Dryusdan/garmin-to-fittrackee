@@ -213,31 +213,31 @@ saint_herblain_gpx = Path(
     f"{Path().resolve()}/tests/files/Saint-Herblain_58_4km.gpx"
 ).read_text()
 
-post_gpx_responses = Path(
+post_workout_responses = Path(
     f"{Path().resolve()}/tests/files/post_gpx_responses.json"
 ).read_text()
 
 
-def test_upload_gpx(mocker, fittrackee):
+def test_upload_workout(mocker, fittrackee):
     mocker.patch("pathlib.Path.open", mocker.mock_open(read_data=saint_herblain_gpx))
     mocker.patch("pathlib.Path.is_file", return_value=True)
     with requests_mock.Mocker() as m:
         m.post(
             "https://dev.localhost.tld/api/workouts",
-            text=post_gpx_responses,
+            text=post_workout_responses,
             status_code=201,
         )
-        workout = fittrackee.upload_gpx(gpx_file="gpx/Saint-herblain.gpx", sport_id=1)
+        workout = fittrackee.upload_workout(file="gpx/Saint-herblain.gpx", sport_id=1)
         assert type(workout).__name__ == "Workout"
 
 
-def test_upload_gpx_no_file(mocker, fittrackee):
+def test_upload_workout_no_file(mocker, fittrackee):
     with mocker.patch("pathlib.Path.is_file", return_value=False):
-        workout = fittrackee.upload_gpx(gpx_file="gpx/Saint-herblain.gpx", sport_id=1)
+        workout = fittrackee.upload_workout(file="gpx/Saint-herblain.gpx", sport_id=1)
         assert workout is None
 
 
-def test_upload_gpx_http_error(mocker, fittrackee):
+def test_upload_workout_http_error(mocker, fittrackee):
     mocker.patch("pathlib.Path.open", mocker.mock_open(read_data=saint_herblain_gpx))
     mocker.patch("pathlib.Path.is_file", return_value=True)
     with requests_mock.Mocker() as m:
@@ -245,7 +245,7 @@ def test_upload_gpx_http_error(mocker, fittrackee):
             "https://dev.localhost.tld/api/workouts",
             status_code=401,
         )
-        workout = fittrackee.upload_gpx(gpx_file="gpx/Saint-herblain.gpx", sport_id=1)
+        workout = fittrackee.upload_workout(file="gpx/Saint-herblain.gpx", sport_id=1)
         assert workout is None
 
 
@@ -257,7 +257,7 @@ def test_upload_connection_error(mocker, fittrackee):
             "https://dev.localhost.tld/api/workouts",
             exc=requests.exceptions.ConnectionError(),
         )
-        workout = fittrackee.upload_gpx(gpx_file="gpx/Saint-herblain.gpx", sport_id=1)
+        workout = fittrackee.upload_workout(file="gpx/Saint-herblain.gpx", sport_id=1)
         assert workout is None
 
 
