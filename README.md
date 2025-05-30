@@ -6,6 +6,8 @@ A simple script to synchronize garmin to fittrackee. Inspired by https://github.
 
 Thank to [Thovi98](https://github.com/Thovi98) for image.
 
+[Github repository](https://github.com/Dryusdan/garmin-to-fittrackee) is a mirror of [git.dryusdan.fr](https://git.dryusdan.fr/Dryusdan/garmin-to-fittrackee)
+
 ## How to install it
 
 This script is a CLI to interact download activity with GPX on Garmin and push it into Fittrackee.
