@@ -1,13 +1,13 @@
 import os
 import sqlite3
 from pathlib import Path
+from typing import Annotated
 from urllib.parse import urlparse
 
 import pendulum
 import typer
 import yaml
 from garminconnect import Garmin
-from typing_extensions import Annotated
 
 from garmin_to_fittrackee.fittrackee import Fittrackee
 from garmin_to_fittrackee.logs import Log
@@ -91,10 +91,15 @@ def sync(
     if not config_exists():
         return
 
-    if activity_format:
-        if activity_format not in ["original", "tcx", "gpx", "kml", "csv"]:
-            log.error(f"{activity_format} not in original, tcx, gpx, kml, csv")
-            raise typer.Exit(code=1)
+    if activity_format and activity_format not in [
+        "original",
+        "tcx",
+        "gpx",
+        "kml",
+        "csv",
+    ]:
+        log.error(f"{activity_format} not in original, tcx, gpx, kml, csv")
+        raise typer.Exit(code=1)
     fittrackee = Fittrackee(config_path)
     if fittrackee.is_workout_present():
         workout = fittrackee.get_last_workout()
@@ -204,7 +209,10 @@ def sync(
 
 def _fetch_garmin_activity_file(garmin, activity_id: int, GarminFileFormat):
     data = garmin.download_activity(activity_id, GarminFileFormat)
-    file = f"{default_tmp_path}/{str(activity_id)}{GarminActivityFormatExtension[str(GarminFileFormat)]}"
+    file = (
+        f"{default_tmp_path}/{str(activity_id)}"
+        f"{GarminActivityFormatExtension[str(GarminFileFormat)]}"
+    )
     with open(file, "wb") as fb:
         fb.write(data)
         log.info(f"Activity data downloaded to file {file}")
