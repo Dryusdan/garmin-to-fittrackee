@@ -50,25 +50,6 @@ jobs:
         run: |
           . "${HOME}"/.cargo/env
           poetry install --with test
-      - name: Generate coverage.json
-        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
-        run: poetry run pytest --cov=. --cov-report json
-      - name: Commit and push
-        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
-        run: |
-          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
-          bump=$(git log --oneline --pretty=format:"%s" | cut -d "[" -f2 | cut -d "]" -f1)
-          if [[ "${bump}" = "patch" || "${bump}" = "minor" || "${bump}" = "major" ]]; then echo "OK"; else bump="patch"; fi
-          git log --oneline --pretty=format:"%s"
-          echo "bump version is ${bump}"
-          echo "Only this version"
-          poetry version ${bump}
-          git add pyproject.toml
-          git commit -m "Bump poetry package version"
-          git add -f coverage.json
-          git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
-          git push
       - name: Deploy new package on repository
         if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: |
