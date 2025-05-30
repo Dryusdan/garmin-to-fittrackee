@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "garmin-to-fittrackee"
-version = "0.9.5"
+version = "0.10.0"
 description = "A simple script to synchronize garmin to fittrackee. Inspired by https://github.com/jat255/strava-to-fittrackee"
 authors = ["Dryusdan <contact@dryusdan.fr>"]
 license = "GPL-3"

@@ -129,9 +129,9 @@ def sync(
                     activityType_id
                 )
                 gpx_data = garmin.download_activity(
-                    activity["activityId"], Garmin.ActivityDownloadFormat.GPX
+                    activity["activityId"], Garmin.ActivityDownloadFormat.TCX
                 )
-                gpx_file = f"/tmp/{str(activity['activityId'])}.gpx"
+                gpx_file = f"/tmp/{str(activity['activityId'])}.tcx"
                 with open(gpx_file, "wb") as fb:
                     fb.write(gpx_data)
                     log.info(f"Activity data downloaded to file {gpx_file}")
