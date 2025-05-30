@@ -103,8 +103,7 @@ class Sports:
                 204 reference backcountry_snowboarding
                 """
                 log.debug(
-                    "Skiing (Cross Country) match"
-                    "with garmin sport id {garmin_sport_id}"
+                    "Skiing (Cross Country) matchwith garmin sport id {garmin_sport_id}"
                 )
                 return 10
             # Mountaineering case
