@@ -1,13 +1,13 @@
 import os
 import sqlite3
 from pathlib import Path
+from typing import Annotated
 from urllib.parse import urlparse
 
 import pendulum
 import typer
 import yaml
 from garminconnect import Garmin
-from typing_extensions import Annotated
 
 from garmin_to_fittrackee.fittrackee import Fittrackee
 from garmin_to_fittrackee.logs import Log
@@ -16,6 +16,22 @@ from garmin_to_fittrackee.sports import Sports
 log = Log(name=__name__)
 
 app = typer.Typer()
+
+GarminActivityFormatExtension = {
+    "ActivityDownloadFormat.ORIGINAL": ".zip",
+    "ActivityDownloadFormat.TCX": ".tcx",
+    "ActivityDownloadFormat.GPX": ".gpx",
+    "ActivityDownloadFormat.KML": ".kml",
+    "ActivityDownloadFormat.CSV": ".CSV",
+}
+
+GarminActivityFormat = {
+    "original": Garmin.ActivityDownloadFormat.ORIGINAL,
+    "tcx": Garmin.ActivityDownloadFormat.TCX,
+    "gpx": Garmin.ActivityDownloadFormat.GPX,
+    "kml": Garmin.ActivityDownloadFormat.KML,
+    "csv": Garmin.ActivityDownloadFormat.CSV,
+}
 
 
 def default_config_path():
@@ -30,6 +46,7 @@ def default_database_path():
 
 config_path = os.environ.get("CONFIG_PATH", default_config_path())
 database_path = os.environ.get("DATABASE_PATH", default_database_path())
+default_tmp_path = os.environ.get("TMP_PATH", "/tmp")
 Path(config_path).mkdir(parents=True, exist_ok=True)
 
 setup = typer.Typer()
@@ -54,6 +71,15 @@ def sync(
             )
         ),
     ] = None,
+    activity_format: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "File format download from Garmin."
+                "Can be original, gpx, tcx, kml, csv. Default is all."
+            )
+        ),
+    ] = None,
     interactive: Annotated[
         bool, typer.Option(help="Can ask question during the sync")
     ] = True,
@@ -65,6 +91,15 @@ def sync(
     if not config_exists():
         return
 
+    if activity_format and activity_format not in [
+        "original",
+        "tcx",
+        "gpx",
+        "kml",
+        "csv",
+    ]:
+        log.error(f"{activity_format} not in original, tcx, gpx, kml, csv")
+        raise typer.Exit(code=1)
     fittrackee = Fittrackee(config_path)
     if fittrackee.is_workout_present():
         workout = fittrackee.get_last_workout()
@@ -128,39 +163,64 @@ def sync(
                 fittrackee_sport_id = Sports.get_fittrackee_sport_by_garmin_id(
                     activityType_id
                 )
-                gpx_data = garmin.download_activity(
-                    activity["activityId"], Garmin.ActivityDownloadFormat.GPX
-                )
-                gpx_file = f"/tmp/{str(activity['activityId'])}.gpx"
-                with open(gpx_file, "wb") as fb:
-                    fb.write(gpx_data)
-                    log.info(f"Activity data downloaded to file {gpx_file}")
-                workout = fittrackee.upload_gpx(
-                    gpx_file=gpx_file, sport_id=fittrackee_sport_id
-                )
-                if workout is not None:
-                    log.debug(f"Deleting {gpx_file}")
-                    Path(gpx_file).unlink(missing_ok=True)
-                    if config["sqlite"]["use"]:
-                        log.debug(
-                            "Adding workout and activity matches in tool database"
-                        )
-                        log.debug(
-                            f"Using Fittrackee ID {workout.id}"
-                            f"and Garmin ID {activity['activityId']}"
-                        )
-                        data_insert = (workout.id, activity["activityId"])
-                        cur = db.cursor()
-                        cur.execute(
-                            "INSERT INTO activities_ids (fittrackee_id, garmin_id)"
-                            "VALUES(?, ?)",
-                            data_insert,
-                        )
-                        db.commit()
+                for _, fileformat in GarminActivityFormat.items():
+                    if (
+                        activity_format
+                        and GarminActivityFormat[activity_format] != fileformat
+                    ):
+                        log.debug(f"{fileformat} is not {activity_format}")
+                        continue
+                    file = _fetch_garmin_activity_file(
+                        garmin=garmin,
+                        activity_id=activity["activityId"],
+                        GarminFileFormat=fileformat,
+                    )
+                    if not file:
+                        continue
+
+                    workout = fittrackee.upload_workout(
+                        file=file, sport_id=fittrackee_sport_id
+                    )
+                    if workout is not None:
+                        log.debug(f"Deleting {file}")
+                        Path(file).unlink(missing_ok=True)
+                        if config["sqlite"]["use"]:
+                            log.debug(
+                                "Adding workout and activity matches in tool database"
+                            )
+                            log.debug(
+                                f"Using Fittrackee ID {workout.id}"
+                                f"and Garmin ID {activity['activityId']}"
+                            )
+                            data_insert = (workout.id, activity["activityId"])
+                            cur = db.cursor()
+                            cur.execute(
+                                "INSERT INTO activities_ids (fittrackee_id, garmin_id)"
+                                "VALUES(?, ?)",
+                                data_insert,
+                            )
+                            db.commit()
+                        break
         start_datetime = start_datetime.add(days=2)
         end_datetime = start_datetime.add(days=1)
         if today.diff(end_datetime, False).in_seconds() > 0:
             end_datetime = today
+
+
+def _fetch_garmin_activity_file(garmin, activity_id: int, GarminFileFormat):
+    data = garmin.download_activity(activity_id, GarminFileFormat)
+    file = (
+        f"{default_tmp_path}/{str(activity_id)}"
+        f"{GarminActivityFormatExtension[str(GarminFileFormat)]}"
+    )
+    with open(file, "wb") as fb:
+        fb.write(data)
+        log.info(f"Activity data downloaded to file {file}")
+    return file
+
+
+def _send_to_fittrackee():
+    pass
 
 
 @app.command()

@@ -189,7 +189,7 @@ class Fittrackee:
                 workout_object.set_present_in_fittrackee()
                 workouts.append(workout_object)
             log.debug(
-                f"Fetched page {page} of workouts " f"(fetched {len(workouts)} so far)"
+                f"Fetched page {page} of workouts (fetched {len(workouts)} so far)"
             )
             page += 1
             return workouts
@@ -219,19 +219,17 @@ class Fittrackee:
             workout_object.set_present_in_fittrackee()
             return workout_object
 
-    def upload_gpx(self, gpx_file: Union[str, Path], sport_id: int, notes: str = None):
+    def upload_workout(self, file: Union[str, Path], sport_id: int, notes: str = None):
         """
         Higly inspired of https://github.com/jat255/strava-to-fittrackee/blob/main/strava_to_fittrackee/s2f.py#L805
         """
-        if not Path(gpx_file).is_file():
-            log.error(f"{gpx_file} is not exist or is not a file")
+        if not Path(file).is_file():
+            log.error(f"{file} is not exist or is not a file")
             return
 
-        # with open(gpx_file, "r") as f:
-        #    gpx = gpxpy.parse(f)
-        log.debug(f"posting {gpx_file} to FitTrackee")
+        log.debug(f"posting {file} to FitTrackee")
         data = {"sport_id": sport_id, "notes": ""}
-        gpx = Path(gpx_file)
+        gpx = Path(file)
         try:
             r = self.client.post(
                 f"{self.api_url}/workouts",
@@ -243,7 +241,7 @@ class Fittrackee:
             error_code = error.response.status_code
             log.debug(error.response.headers)
             log.error(
-                f"Failed to post {gpx_file}."
+                f"Failed to post {file}."
                 f"Return code {error_code}. Error {error.response.text}"
             )
             return
@@ -304,12 +302,10 @@ class Fittrackee:
     @staticmethod
     def is_instance_is_supported(host: str):
         config = Fittrackee.get_instance_config(host=host)
-        if not (
+        return (
             config
             and "data" in config
             and "version" in config["data"]
             and Version(config["data"]["version"]) >= Version("0.7.29")
             and Version(config["data"]["version"]) < Version("1.0")
-        ):
-            return False
-        return True
+        )
