@@ -4,7 +4,7 @@ A simple script to synchronize garmin to fittrackee. Inspired by https://github.
 
 ![A watch with an arrow to fitrackee icon and another arrow from fitrackee icon to watch](img/garmin-to-fittrackee.png)
 
-Thank to [https://github.com/Thovi98](Thovi98) for image.
+Thank to [Thovi98](https://github.com/Thovi98) for image.
 
 ## How to install it
 
