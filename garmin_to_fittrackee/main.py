@@ -179,7 +179,9 @@ def sync(
                         continue
 
                     workout = fittrackee.upload_workout(
-                        file=file, sport_id=fittrackee_sport_id
+                        file=file,
+                        sport_id=fittrackee_sport_id,
+                        name=activity.get("activityName"),
                     )
                     if workout is not None:
                         log.debug(f"Deleting {file}")

@@ -219,7 +219,9 @@ class Fittrackee:
             workout_object.set_present_in_fittrackee()
             return workout_object
 
-    def upload_workout(self, file: Union[str, Path], sport_id: int, notes: str = None):
+    def upload_workout(
+        self, file: Union[str, Path], sport_id: int, notes: str = None, name: str = ""
+    ):
         """
         Higly inspired of https://github.com/jat255/strava-to-fittrackee/blob/main/strava_to_fittrackee/s2f.py#L805
         """
@@ -228,7 +230,7 @@ class Fittrackee:
             return
 
         log.debug(f"posting {file} to FitTrackee")
-        data = {"sport_id": sport_id, "notes": ""}
+        data = {"sport_id": sport_id, "notes": "", "title": name}
         gpx = Path(file)
         try:
             r = self.client.post(
