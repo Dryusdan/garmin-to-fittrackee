@@ -1,0 +1,45 @@
+---
+name: Prepare releases
+run-name: Prepare_releases
+on:
+  pull_request:
+    branches:
+      - stable
+    paths-ignore:
+      - 'coverage.json'
+      - 'pyproject.toml'
+  push:
+    branches:
+      - stable
+    paths-ignore:
+      - 'coverage.json'
+      - 'pyproject.toml'
+
+jobs:
+  coverage:
+    runs-on: python3.13
+    env:
+      CI_COMMIT_MESSAGE: "[chore] Update coverage.json"
+      CI_COMMIT_AUTHOR: "Actions[bot]"
+      CI_COMMIT_EMAIL: actions-bot@dryusdan.fr
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
+          ref: stable
+      - name: Install tests dependencies
+        if: github.event_name != 'pull_request'
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with test
+      - name: Deploy new package on repository
+        if: github.event_name != 'pull_request'
+        run: |
+          poetry config http-basic.forgejo ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish --build --repository forgejo
+          poetry publish

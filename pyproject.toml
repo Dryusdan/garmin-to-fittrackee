@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "garmin-to-fittrackee"
-version = "0.10.2"
+version = "0.11.0"
 description = "A simple script to synchronize garmin to fittrackee. Inspired by https://github.com/jat255/strava-to-fittrackee"
 authors = ["Dryusdan <contact@dryusdan.fr>"]
 license = "GPL-3"
@@ -35,7 +35,7 @@ pytest-cov = "^6.1.1"
 coverage = "^7.8.2"
 
 [[tool.poetry.source]]
-name = "gitea"
+name = "forgejo"
 url = "https://git.dryusdan.fr/api/packages/Dryusdan/pypi"
 priority = "supplemental"
 

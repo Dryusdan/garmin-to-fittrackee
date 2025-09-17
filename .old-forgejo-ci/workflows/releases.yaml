@@ -28,9 +28,7 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
-          ref: stable
+          ref: ${{ github.event.pull_request.head.sha }}
       # Set environment variable "is-auto-commit"
       - name: Set environment variable "is-auto-commit"
         run: |
