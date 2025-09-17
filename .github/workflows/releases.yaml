@@ -17,7 +17,7 @@ on:
 
 jobs:
   coverage:
-    runs-on: python3.13
+    runs-on: git.dryusdan.fr/dryusdan/python:3.13
     env:
       CI_COMMIT_MESSAGE: "[chore] Update coverage.json"
       CI_COMMIT_AUTHOR: gitea-actions-bot

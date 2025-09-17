@@ -13,11 +13,11 @@ jobs:
     strategy:
       matrix:
         os:
-          - python3.13
-          - python3.12
-          - python3.11
-          - python3.10
-    runs-on: ${{ matrix.os }}
+          - "3.13"
+          - "3.12"
+          - "3.11"
+          - "3.10"
+    runs-on: git.dryusdan.fr/dryusdan/python:${{ matrix.os }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
