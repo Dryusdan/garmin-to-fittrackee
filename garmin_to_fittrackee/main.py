@@ -147,7 +147,7 @@ def sync(
             f"to {end_datetime.to_formatted_date_string()}"
         )
         activities = garmin.get_activities_by_date(
-            start_datetime.isoformat(), end_datetime.isoformat()
+            start_datetime.to_date_string(), end_datetime.to_date_string()
         )
         if activities:
             for activity in activities:
