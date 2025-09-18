@@ -40,6 +40,7 @@ jobs:
           ${HOME}/venv/bin/activate
           pip3 install poetry -U --break-system-packages
       - name: Install test programm
+        run: |
           ${HOME}/venv/bin/activate
           curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
@@ -74,6 +75,7 @@ jobs:
           ${HOME}/venv/bin/activate
           pip3 install poetry -U --break-system-packages
       - name: Install test programm
+        run: |
           ${HOME}/venv/bin/activate
           curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
@@ -116,6 +118,7 @@ jobs:
           ${HOME}/venv/bin/activate
           pip3 install poetry -U --break-system-packages
       - name: Install test programm
+        run: |
           ${HOME}/venv/bin/activate
           curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
