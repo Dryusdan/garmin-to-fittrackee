@@ -17,17 +17,33 @@ jobs:
   build-program:
     strategy:
       matrix:
-        os:
+        python-version:
           - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
-    runs-on: git.dryusdan.fr/dryusdan/python:${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Ubuntu dependencies
+        run: sudo apt-get install -y bash git nodejs yarnpkg
+      - name: Install Poetry
+        run: |
+          python3 -m venv ${HOME}/venv
+          ${HOME}/venv/bin/activate
+          pip3 install poetry -U --break-system-packages
+      - name: Install test programm
+          ${HOME}/venv/bin/activate
+          curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
+          . "${HOME}"/.cargo/env
+          poetry install --with test
       - name: Build wheel package
         run: |
           . "${HOME}"/.cargo/env
@@ -35,44 +51,76 @@ jobs:
   run-code-formatters:
     strategy:
       matrix:
-        os:
+        python-version:
           - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
-    runs-on: git.dryusdan.fr/dryusdan/python:${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Install check program
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Ubuntu dependencies
+        run: sudo apt-get install -y bash git nodejs yarnpkg
+      - name: Install Poetry
         run: |
+          python3 -m venv ${HOME}/venv
+          ${HOME}/venv/bin/activate
+          pip3 install poetry -U --break-system-packages
+      - name: Install test programm
+          ${HOME}/venv/bin/activate
+          curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
           poetry install --with dev
       - name: Run isort check
-        run: poetry run isort . --check-only
+        run: |
+          ${HOME}/venv/bin/activate
+          poetry run isort . --check-only
       - name: Run ruff check
-        run: poetry run ruff check . --exit-non-zero-on-fix
+        run: |
+          ${HOME}/venv/bin/activate
+          poetry run ruff check . --exit-non-zero-on-fix
       - name: Run ruff formatter
-        run: poetry run ruff format . --check
+        run: |
+          ${HOME}/venv/bin/activate
+          poetry run ruff format . --check
   run-unittest:
     strategy:
       matrix:
-        os:
+        python-version:
           - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
-    runs-on: git.dryusdan.fr/dryusdan/python:${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Install test program
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Ubuntu dependencies
+        run: sudo apt-get install -y bash git nodejs yarnpkg
+      - name: Install Poetry
         run: |
+          python3 -m venv ${HOME}/venv
+          ${HOME}/venv/bin/activate
+          pip3 install poetry -U --break-system-packages
+      - name: Install test programm
+          ${HOME}/venv/bin/activate
+          curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
           poetry install --with test
       - name: Run unit test
-        run: poetry run pytest --cov=.
+        run: |
+          ${HOME}/venv/bin/activate
+          poetry run pytest --cov=.

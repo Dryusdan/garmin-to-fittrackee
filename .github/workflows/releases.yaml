@@ -17,7 +17,7 @@ on:
 
 jobs:
   coverage:
-    runs-on: git.dryusdan.fr/dryusdan/python:3.13
+    runs-on: ubuntu-latest
     env:
       CI_COMMIT_MESSAGE: "[chore] Update coverage.json"
       CI_COMMIT_AUTHOR: gitea-actions-bot
@@ -45,14 +45,31 @@ jobs:
           else
             echo "is-auto-commit=false" >> $GITHUB_ENV
           fi
+      - name: Set up Python 3.13
+        if: env.is-auto-commit == 'false' && github.event_name != 'pull_request'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Ubuntu dependencies
+        if: env.is-auto-commit == 'false' && github.event_name != 'pull_request'
+        run: sudo apt-get install -y bash git nodejs yarnpkg
+      - name: Install Poetry
+        if: env.is-auto-commit == 'false' && github.event_name != 'pull_request'
+        run: |
+          python3 -m venv ${HOME}/venv
+          ${HOME}/venv/bin/activate
+          pip3 install poetry -U --break-system-packages
       - name: Install tests dependencies
         if: env.is-auto-commit == 'false' && github.event_name != 'pull_request'
         run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
+          ${HOME}/venv/bin/activate
           poetry install --with test
       - name: Deploy new package on repository
         if: env.is-auto-commit == 'false' && github.event_name != 'pull_request'
         run: |
+          ${HOME}/venv/bin/activate
           poetry config http-basic.gitea ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           poetry publish --build --repository gitea
