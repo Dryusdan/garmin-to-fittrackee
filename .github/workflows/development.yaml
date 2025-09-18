@@ -27,7 +27,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Ubuntu dependencies
         run: sudo apt-get install -y bash git nodejs yarnpkg
-      - name: Install and configure Poetry
       - name: Install Poetry
         run: |
           python3 -m venv ${HOME}/venv
