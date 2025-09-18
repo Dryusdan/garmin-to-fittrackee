@@ -27,12 +27,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Ubuntu dependencies
         run: sudo apt-get install -y bash git nodejs yarnpkg
+      - name: Install and configure Poetry
       - name: Install Poetry
-        run: sudo pip3 install poetry -U --break-system-packages
+        run: |
+          python3 -m venv ${HOME}/venv
+          ${HOME}/venv/bin/activate
+          pip3 install poetry -U --break-system-packages
       - name: Install test programm
         run: |
+          ${HOME}/venv/bin/activate
           curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
           poetry install --with test
       - name: Run unit test
-        run: poetry run pytest
+        run: |
+          ${HOME}/venv/bin/activate
+          poetry run pytest
