@@ -1,0 +1,78 @@
+---
+name: Code quality
+run-name: Codequality
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+    branches:
+      - main
+    paths-ignore:
+      - coverage.json
+
+jobs:
+  build-program:
+    strategy:
+      matrix:
+        os:
+          - python3.13
+          - python3.12
+          - python3.11
+          - python3.10
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Build wheel package
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry build
+  run-code-formatters:
+    strategy:
+      matrix:
+        os:
+          - python3.13
+          - python3.12
+          - python3.11
+          - python3.10
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install check program
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with dev
+      - name: Run isort check
+        run: poetry run isort . --check-only
+      - name: Run ruff check
+        run: poetry run ruff check . --exit-non-zero-on-fix
+      - name: Run ruff formatter
+        run: poetry run ruff format . --check
+  run-unittest:
+    strategy:
+      matrix:
+        os:
+          - python3.13
+          - python3.12
+          - python3.11
+          - python3.10
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install test program
+        run: |
+          . "${HOME}"/.cargo/env
+          poetry install --with test
+      - name: Run unit test
+        run: poetry run pytest --cov=.
