@@ -12,17 +12,26 @@ jobs:
   run-unittest:
     strategy:
       matrix:
-        os:
+        python-version:
           - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
-    runs-on: git.dryusdan.fr/dryusdan/python:${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Ubuntu dependencies
+        run: sudo apt-get install -y bash git nodejs yarnpkg
+      - name: Install Poetry
+        run: sudo pip3 install poetry -U --break-system-packages
       - name: Install test programm
         run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path --default-toolchain stable -y
           . "${HOME}"/.cargo/env
           poetry install --with test
       - name: Run unit test
