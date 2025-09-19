@@ -32,12 +32,12 @@ jobs:
           token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
           ref: stable
       - name: Install tests dependencies
-        if: gitea.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         run: |
           . "${HOME}"/.cargo/env
           poetry install --with test
       - name: Deploy new package on repository
-        if: gitea.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         run: |
           poetry config http-basic.forgejo ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
