@@ -35,7 +35,7 @@ pytest-cov = "^6.1.1"
 coverage = "^7.8.2"
 
 [[tool.poetry.source]]
-name = "gitea"
+name = "forgejo"
 url = "https://git.dryusdan.fr/api/packages/Dryusdan/pypi"
 priority = "supplemental"
 
