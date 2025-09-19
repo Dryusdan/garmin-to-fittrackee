@@ -31,27 +31,13 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
           ref: stable
-      # Set environment variable "is-auto-commit"
-      - name: Set environment variable "is-auto-commit"
-        run: |
-          if git show --summary --oneline --pretty=format:"%an" | grep -q ${{ env.CI_COMMIT_AUTHOR }}
-          then
-            if git show --summary --oneline --pretty=format:"%s" | grep -q ${{ env.CI_COMMIT_MESSAGE }}
-            then
-              echo "is-auto-commit=true" >> $GITHUB_ENV
-            else
-              echo "is-auto-commit=false" >> $GITHUB_ENV
-            fi
-          else
-            echo "is-auto-commit=false" >> $GITHUB_ENV
-          fi
       - name: Install tests dependencies
-        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        if: gitea.event_name != 'pull_request'
         run: |
           . "${HOME}"/.cargo/env
           poetry install --with test
       - name: Deploy new package on repository
-        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
+        if: gitea.event_name != 'pull_request'
         run: |
           poetry config http-basic.forgejo ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
