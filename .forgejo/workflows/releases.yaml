@@ -46,12 +46,12 @@ jobs:
             echo "is-auto-commit=false" >> $GITHUB_ENV
           fi
       - name: Install tests dependencies
-        if: env.is-auto-commit == 'false' && forgejo.event_name != 'pull_request'
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: |
           . "${HOME}"/.cargo/env
           poetry install --with test
       - name: Deploy new package on repository
-        if: env.is-auto-commit == 'false' && forgejo.event_name != 'pull_request'
+        if: env.is-auto-commit == 'false' && gitea.event_name != 'pull_request'
         run: |
           poetry config http-basic.forgejo ${{ secrets.REPOSITORY_USER }} ${{ secrets.REPOSITORY_TOKEN }}
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
