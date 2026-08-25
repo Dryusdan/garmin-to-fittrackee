@@ -343,3 +343,14 @@ def test_config_exists_false(mocker):
     mocker.patch("pathlib.Path.is_dir", return_value=False)
     mocker.patch("pathlib.Path.is_file", return_value=False)
     assert main.config_exists() is False
+
+
+def test_main_dunder_with_config_import(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.yml"
+    cfg.write_text(f"log:\n  level: DEBUG\nsqlite:\n  path: '{tmp_path}'\n")
+    monkeypatch.setenv("CONFIG_PATH", str(tmp_path))
+    import contextlib
+    import runpy
+
+    with contextlib.suppress(SystemExit):
+        runpy.run_path(main.__file__, run_name="__main__")

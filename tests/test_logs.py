@@ -46,3 +46,11 @@ def test_log_without_args_without_config(mocker):
 def test_log_info():
     log = Log(name="test", level="INFO")
     assert log.level == 0
+
+
+def test_log_uses_level_from_config(mocker):
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("pathlib.Path.is_file", return_value=True)
+    mocker.patch("pathlib.Path.open", mocker.mock_open(read_data=config_yaml))
+    log = Log(name="test")
+    assert log.level == 0

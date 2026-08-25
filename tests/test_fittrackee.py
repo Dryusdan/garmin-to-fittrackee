@@ -541,3 +541,20 @@ def test_is_instance_is_supported_bad_version():
         )
         is_supported = Fittrackee.is_instance_is_supported(host="dev.localhost.tld")
         assert is_supported is False
+
+
+def test_fittrackee_invalid_yaml_raises(mocker):
+    mocker.patch("pathlib.Path.is_file", return_value=True)
+    mocker.patch("pathlib.Path.open", mocker.mock_open(read_data="\t\tindent"))
+    with pytest.raises(typer.Exit):
+        Fittrackee("config/")
+
+
+def test_token_update_saves_config(fittrackee, mocker):
+    save_config = mocker.patch.object(
+        Fittrackee, "_Fittrackee__save_config", return_value=None
+    )
+    token = {"access_token": "new"}
+    fittrackee._Fittrackee__token_update(token)
+    assert fittrackee.tokens == token
+    save_config.assert_called_once()
