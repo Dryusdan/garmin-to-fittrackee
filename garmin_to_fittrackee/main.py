@@ -8,12 +8,19 @@ import pendulum
 import typer
 import yaml
 from garminconnect import Garmin
+from rich.console import Console
+from rich.panel import Panel
 
-from garmin_to_fittrackee.fittrackee import Fittrackee
+from garmin_to_fittrackee.fittrackee import (
+    OAUTH_REDIRECT_URI,
+    OAUTH_SCOPE,
+    Fittrackee,
+)
 from garmin_to_fittrackee.logs import Log, set_log_level
 from garmin_to_fittrackee.sports import Sports
 
 log = Log(name=__name__)
+console = Console()
 
 app = typer.Typer()
 
@@ -363,16 +370,14 @@ def garmin(
 def fittrackee(
     client_id: Annotated[
         str,
-        typer.Option(help="Client id of fittrackee. If not specify, we use prompt.")
-        == "",
-        typer.Option(prompt=True),
-    ],
+        typer.Option(help="Client id of fittrackee. If not specify, we use prompt."),
+    ] = "",
     client_secret: Annotated[
         str,
-        typer.Option(help="Client secret of fittrackee. If not specify, we use prompt.")
-        == "",
-        typer.Option(prompt=True, hide_input=True),
-    ],
+        typer.Option(
+            help="Client secret of fittrackee. If not specify, we use prompt."
+        ),
+    ] = "",
     fittrackee_domain: Annotated[
         str,
         typer.Option(
@@ -380,12 +385,27 @@ def fittrackee(
                 "Domain of Fittrackee instance (without https)."
                 "If not specify, we use prompt."
             )
-        )
-        == "",
-        typer.Option(prompt=True),
-    ],
+        ),
+    ] = "",
     force: Annotated[bool, typer.Option(help="Rewrite configuration file")] = False,
 ):
+    console.print(
+        Panel(
+            "[bold]To configure your Fittrackee OAuth2 application, use:[/bold]\n\n"
+            f"[bold]Scope:[/bold] {OAUTH_SCOPE}\n"
+            f"[bold]Redirect URL:[/bold] {OAUTH_REDIRECT_URI}",
+            title="Fittrackee setup",
+            border_style="green",
+        )
+    )
+    if not client_id:
+        client_id = typer.prompt("Client id")
+    if not client_secret:
+        client_secret = typer.prompt("Client secret", hide_input=True)
+    if not fittrackee_domain:
+        fittrackee_domain = typer.prompt(
+            "Domain of your Fittrackee instance (without https://)"
+        )
     if force:
         log.warning("Rewrite configuration file")
         Path(f"{config_path}/fittrackee.yml").unlink(missing_ok=True)

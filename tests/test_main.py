@@ -308,6 +308,24 @@ def test_setup_fittrackee_unsupported(mocker, tmp_path):
         )
 
 
+def test_setup_fittrackee_prompts_when_args_missing(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    prompt = mocker.patch(
+        "typer.prompt",
+        side_effect=["cid", "cs", "https://ft.example.com"],
+    )
+    fittrackee_class = mocker.patch.object(main, "Fittrackee")
+    fittrackee_class.is_instance_is_supported.return_value = True
+    main.fittrackee()
+    assert prompt.call_count == 3
+    fittrackee_class.assert_called_once_with(
+        config_path=str(tmp_path),
+        client_id="cid",
+        client_secret="cs",
+        host="ft.example.com",
+    )
+
+
 def test_setup_fittrackee_force_unlinks_config(mocker, tmp_path):
     config_file = tmp_path / "fittrackee.yml"
     config_file.write_text("old")

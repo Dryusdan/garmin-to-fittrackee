@@ -15,6 +15,12 @@ from garmin_to_fittrackee.workout import Workout
 
 log = Log(__name__)
 
+OAUTH_SCOPE = (
+    "equipments:read equipments:write media:write profile:read profile:write "
+    "workouts:read workouts:write"
+)
+OAUTH_REDIRECT_URI = "https://localhost/"
+
 
 class Fittrackee:
     @staticmethod
@@ -101,11 +107,8 @@ class Fittrackee:
         authorize_url = f"https://{self.host}/profile/apps/authorize"
         self.api_url = f"https://{self.host}/api"
 
-        redirect_uri = "https://localhost/"
-        scope = (
-            "workouts:read workouts:write profile:read profile:write "
-            "equipments:read equipments:write media:write"
-        )
+        redirect_uri = OAUTH_REDIRECT_URI
+        scope = OAUTH_SCOPE
         oauth = OAuth2Session(self.client_id, redirect_uri=redirect_uri, scope=scope)
         authorization_url, state = oauth.authorization_url(authorize_url)
         print(

@@ -12,9 +12,9 @@ Thank to [Thovi98](https://github.com/Thovi98) for image.
 
 This script is a CLI to interact download activity with GPX on Garmin and push it into Fittrackee.
 
-This program use `garminconnect` package to interact with Garmin and `Typer` to provide a CLI. Also, it use sqlite3 to keep whitch Garmin activity match Fittrackee workout with the aim of modifying Fittrackee sessions if new features appear.
+This program uses the `garminconnect` package to interact with Garmin and `Typer` to provide a CLI. Also, it uses sqlite3 to keep which Garmin activity matches a Fittrackee workout with the aim of modifying Fittrackee sessions if new features appear.
 
-This program is developed around Fittrackee v0.7.29 and work with it. It work on Python 3.12, 3.11 and 3.10 (minimal version required) but actively developped on Python 3.11. It's only run on Linux. Other OS isn't tested.
+This program is developed around Fittrackee v0.7.29 and works with it. It works on Python 3.12, 3.11 and 3.10 (minimal version required) but is actively developed on Python 3.11. It only runs on Linux. Other OS isn't tested.
 
 ### To install it
 
@@ -37,45 +37,55 @@ cd garmin-to-fittrackee
 poetry install
 ```
 
+## Environment variables
+
+Some paths can be overridden with environment variables. They all have sensible defaults.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CONFIG_PATH` | `~/.config/garmin-to-fittrackee` | Directory where the configuration files are stored (`config.yml`, `garmintoken/`, `fittrackee.yml`, `garmin.yml`). |
+| `DATABASE_PATH` | `~/.local/share/garmin_to_fittrackee` | Default value for the `setup config-tool --database-path` option, where the `db.sqlite3` database is created. |
+| `TMP_PATH` | `/tmp` | Directory where downloaded Garmin activity files are temporarily written. |
+
 ## How to use it
 
-### Setting you're fittrackee instance Oauth2 application
+### Setting your fittrackee instance Oauth2 application
 
-You need to setting an application in your Fittrackee instance.
+You need to set an application in your Fittrackee instance.
 
-Go to you're fittrackee account, then go to "apps", then "Add an application".
+Go to your fittrackee account, then go to "apps", then "Add an application".
 
+In the "Add a new OAuth2 application" section, choose your `Application name`.
 
-In the "Add a new OAuth2 application" section; chose your `Application name`.
-
-To `application URL` and `Redirect URL` set this URL `https://localhost` (usefull for configuration, later in this README)/
+To `application URL` and `Redirect URL` set this URL `https://localhost` (useful for configuration, later in this README).
 
 In Scope, check `profile:read`, `workouts:read`, `workouts:write`.
 
-After submit your application, an application ID and secret is displayed. These informatiuon is usefull for setting the CLI, note theses.
-And that all for Fittrackee.
+> Note: the CLI requires a broader scope. When you run `setup fittrackee`, it displays the exact scope to check. You can safely check all the following scopes in your Fittrackee application: `equipments:read`, `equipments:write`, `media:write`, `profile:read`, `profile:write`, `workouts:read`, `workouts:write`.
 
+After submitting your application, an application ID and secret are displayed. These information are useful for setting the CLI, note these down.
+And that's all for Fittrackee.
 
 The first time, you need to run 3 commands :
 
 ```bash
-garmin2fittrackee setup config-tool #
+garmin2fittrackee setup config-tool
 ```
-This command set the configuration, default log level ("INFO"), default path to database.
-Use `--help` to view which parameters you can change
+This command sets the configuration, default log level ("INFO"), default path to database.
+Use `--help` to view which parameters you can change.
 
-The seconds command login to Garmin. The client ask you're Garmin's credential :
+The second command logs in to Garmin. The client asks for your Garmin's credentials :
 
 ```bash
 garmin2fittrackee setup garmin
 ```
-You can save this credentials with `--store`. You can set this parameters in cli argument. See `--help`.
+You can save these credentials with `--store`. You can set these parameters in cli argument. See `--help`.
 
-The third command is used to setup fittrackee connection.
+The third command is used to set up the Fittrackee connection.
 ```bash
 garmin2fittrackee setup fittrackee
 ```
 
-The command ask your application ID, application secret, the domain of you're domain Fittrackee instance (without `https://`).
+The command asks for your application ID, application secret, the domain of your Fittrackee instance (without `https://`).
 
 Then the CLI will guide you through authorising the application to Fittrackee.

@@ -105,8 +105,8 @@ def test_web_application_flow_scope(mocker):
     fittrackee._Fittrackee__web_application_flow()
     scope = oauth_mock.call_args.kwargs["scope"]
     assert scope == (
-        "workouts:read workouts:write profile:read profile:write "
-        "equipments:read equipments:write media:write"
+        "equipments:read equipments:write media:write profile:read profile:write "
+        "workouts:read workouts:write"
     )
     oauth_mock.return_value.fetch_token.assert_called()
 
