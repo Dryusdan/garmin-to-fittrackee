@@ -18,10 +18,9 @@ jobs:
     strategy:
       matrix:
         python-version:
+          - "3.14"
           - "3.13"
           - "3.12"
-          - "3.11"
-          - "3.10"
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -53,10 +52,9 @@ jobs:
     strategy:
       matrix:
         python-version:
+          - "3.14"
           - "3.13"
           - "3.12"
-          - "3.11"
-          - "3.10"
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -96,10 +94,9 @@ jobs:
     strategy:
       matrix:
         python-version:
+          - "3.14"
           - "3.13"
           - "3.12"
-          - "3.11"
-          - "3.10"
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository

@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Union
 from urllib.parse import parse_qs, urlparse
 
 import pendulum
@@ -241,7 +240,7 @@ class Fittrackee:
             return workout_object
 
     def upload_workout(
-        self, file: Union[str, Path], sport_id: int, notes: str = None, name: str = ""
+        self, file: str | Path, sport_id: int, notes: str = None, name: str = ""
     ):
         """
         Higly inspired of https://github.com/jat255/strava-to-fittrackee/blob/main/strava_to_fittrackee/s2f.py#L805
