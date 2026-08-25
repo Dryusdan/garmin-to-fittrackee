@@ -174,6 +174,7 @@ def sync(
                 fittrackee_sport_id = Sports.get_fittrackee_sport_by_garmin_id(
                     activityType_id
                 )
+                workout = None
                 for _, fileformat in GarminActivityFormat.items():
                     if (
                         activity_format
@@ -197,23 +198,24 @@ def sync(
                     if workout is not None:
                         log.debug(f"Deleting {file}")
                         Path(file).unlink(missing_ok=True)
-                        if config["sqlite"]["use"]:
-                            log.debug(
-                                "Adding workout and activity matches in tool database"
-                            )
-                            log.debug(
-                                f"Using Fittrackee ID {workout.id}"
-                                f"and Garmin ID {activity['activityId']}"
-                            )
-                            data_insert = (workout.id, activity["activityId"])
-                            cur = db.cursor()
-                            cur.execute(
-                                "INSERT INTO activities_ids (fittrackee_id, garmin_id)"
-                                "VALUES(?, ?)",
-                                data_insert,
-                            )
-                            db.commit()
                         break
+                if workout is None:
+                    log.info(
+                        "No file-based upload succeeded for activity "
+                        f"{activity['activityId']}; adding it as a workout "
+                        "without GPS"
+                    )
+                    workout = fittrackee.add_workout_no_gpx(
+                        sport_id=fittrackee_sport_id,
+                        workout_date=pendulum.parse(activity["startTimeLocal"]).format(
+                            "YYYY-MM-DD HH:mm"
+                        ),
+                        distance=activity.get("distance", 0) / 1000,
+                        duration=activity.get("duration", 0),
+                        title=activity.get("activityName", ""),
+                    )
+                if workout is not None:
+                    _save_activity_mapping(db, workout, activity, config)
         start_datetime = start_datetime.add(days=2)
         end_datetime = start_datetime.add(days=1)
         if today.diff(end_datetime, False).in_seconds() > 0:
@@ -230,6 +232,22 @@ def _fetch_garmin_activity_file(garmin, activity_id: int, GarminFileFormat):
         fb.write(data)
         log.info(f"Activity data downloaded to file {file}")
     return file
+
+
+def _save_activity_mapping(db, workout, activity, config):
+    if not config["sqlite"]["use"]:
+        return
+    log.debug("Adding workout and activity matches in tool database")
+    log.debug(
+        f"Using Fittrackee ID {workout.id} and Garmin ID {activity['activityId']}"
+    )
+    data_insert = (workout.id, activity["activityId"])
+    cur = db.cursor()
+    cur.execute(
+        "INSERT INTO activities_ids (fittrackee_id, garmin_id) VALUES(?, ?)",
+        data_insert,
+    )
+    db.commit()
 
 
 def _send_to_fittrackee():

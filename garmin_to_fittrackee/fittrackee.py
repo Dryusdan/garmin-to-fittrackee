@@ -278,6 +278,43 @@ class Fittrackee:
         log.info(f"Activity added on Fittrackee with id {workout.id}")
         return workout
 
+    def add_workout_no_gpx(
+        self,
+        sport_id: int,
+        workout_date: str,
+        distance: float,
+        duration: float,
+        title: str = "",
+    ):
+        data = {
+            "sport_id": sport_id,
+            "workout_date": workout_date,
+            "distance": distance,
+            "duration": duration,
+            "title": title,
+        }
+        try:
+            r = self.client.post(f"{self.api_url}/workouts/no_gpx", json=data)
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            log.error(
+                "Failed to post workout without gpx."
+                f"Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
+        results = r.json()
+        workout = object.__new__(Workout)
+        workout.__dict__ = results["data"]["workouts"][0]
+        workout.set_present_in_fittrackee()
+        workout.set_present_in_garmin()
+        log.info(f"Activity added on Fittrackee with id {workout.id}")
+        return workout
+
     def get_sports(self):
         """
         Needed only during development

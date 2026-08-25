@@ -421,6 +421,55 @@ def test_upload_connection_error(mocker, fittrackee, tmp_path):
         assert workout is None
 
 
+def test_add_workout_no_gpx(mocker, fittrackee):
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://dev.localhost.tld/api/workouts/no_gpx",
+            text=post_workout_responses,
+            status_code=201,
+        )
+        workout = fittrackee.add_workout_no_gpx(
+            sport_id=1,
+            workout_date="2025-09-06 12:13",
+            distance=2.629,
+            duration=611.63,
+            title="Indoor ride",
+        )
+        assert type(workout).__name__ == "Workout"
+        assert m.request_history[0].json()["sport_id"] == 1
+        assert m.request_history[0].json()["workout_date"] == "2025-09-06 12:13"
+
+
+def test_add_workout_no_gpx_http_error(mocker, fittrackee):
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://dev.localhost.tld/api/workouts/no_gpx",
+            status_code=401,
+        )
+        workout = fittrackee.add_workout_no_gpx(
+            sport_id=1,
+            workout_date="2025-09-06 12:13",
+            distance=2.629,
+            duration=611.63,
+        )
+        assert workout is None
+
+
+def test_add_workout_no_gpx_connection_error(mocker, fittrackee):
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://dev.localhost.tld/api/workouts/no_gpx",
+            exc=requests.exceptions.ConnectionError(),
+        )
+        workout = fittrackee.add_workout_no_gpx(
+            sport_id=1,
+            workout_date="2025-09-06 12:13",
+            distance=2.629,
+            duration=611.63,
+        )
+        assert workout is None
+
+
 # def test_fittrackee_token_update(fittrackee):
 #    token = {
 #        "access_token": "hoh2eu6eikee6Aisi1beez5ue5FieJohn4oeyoo3re2maic7Mee4Phohl",
