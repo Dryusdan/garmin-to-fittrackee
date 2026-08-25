@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Union
+from urllib.parse import parse_qs, urlparse
 
 import pendulum
 import requests
@@ -13,10 +13,26 @@ from rich import print
 from garmin_to_fittrackee.logs import Log
 from garmin_to_fittrackee.workout import Workout
 
+
+class WorkoutNotFoundError(Exception):
+    pass
+
+
 log = Log(__name__)
+
+OAUTH_SCOPE = (
+    "equipments:read equipments:write media:write profile:read profile:write "
+    "workouts:read workouts:write"
+)
+OAUTH_REDIRECT_URI = "https://localhost/"
 
 
 class Fittrackee:
+    @staticmethod
+    def _extract_state(authorization_response: str):
+        params = parse_qs(urlparse(authorization_response).query)
+        return params.get("state", [None])[0]
+
     def __init__(
         self,
         config_path: str,
@@ -96,16 +112,30 @@ class Fittrackee:
         authorize_url = f"https://{self.host}/profile/apps/authorize"
         self.api_url = f"https://{self.host}/api"
 
-        redirect_uri = "https://localhost/"
-        scope = "workouts:read workouts:write profile:read"
+        redirect_uri = OAUTH_REDIRECT_URI
+        scope = OAUTH_SCOPE
         oauth = OAuth2Session(self.client_id, redirect_uri=redirect_uri, scope=scope)
         authorization_url, state = oauth.authorization_url(authorize_url)
-        print(f"Please go to {authorization_url} and authorize access.\n")
-        authorization_response = typer.prompt(
-            "Enter the full callback URL from the browser address bar"
-            "after you are redirected and press <enter>"
+        print(
+            "Please go to the following URL and authorize access:\n"
+            f"{authorization_url}\n"
+            "Make sure to copy the full URL (it ends with `state=...`)."
         )
-        print(authorization_response)
+        while True:
+            authorization_response = typer.prompt(
+                "Enter the full callback URL from the browser address bar"
+                "after you are redirected and press <enter>"
+            )
+            print(authorization_response)
+            if self._extract_state(authorization_response) is None:
+                log.error(
+                    "The callback URL is incomplete: the `state` parameter is missing. "
+                    "This usually happens when the URL is truncated when copied from "
+                    "the terminal (the full URL ends with `state=...`). "
+                    "Copy the full URL from your browser address bar and try again."
+                )
+                continue
+            break
         log.debug("Logging to fittrackee instance")
         self.tokens = oauth.fetch_token(
             f"{self.api_url}/oauth/token",
@@ -192,7 +222,7 @@ class Fittrackee:
                 f"Fetched page {page} of workouts (fetched {len(workouts)} so far)"
             )
             page += 1
-            return workouts
+        return workouts
 
     def get_last_workout(self):
         try:
@@ -220,7 +250,7 @@ class Fittrackee:
             return workout_object
 
     def upload_workout(
-        self, file: Union[str, Path], sport_id: int, notes: str = None, name: str = ""
+        self, file: str | Path, sport_id: int, notes: str = None, name: str = ""
     ):
         """
         Higly inspired of https://github.com/jat255/strava-to-fittrackee/blob/main/strava_to_fittrackee/s2f.py#L805
@@ -244,6 +274,43 @@ class Fittrackee:
             log.debug(error.response.headers)
             log.error(
                 f"Failed to post {file}."
+                f"Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
+        results = r.json()
+        workout = object.__new__(Workout)
+        workout.__dict__ = results["data"]["workouts"][0]
+        workout.set_present_in_fittrackee()
+        workout.set_present_in_garmin()
+        log.info(f"Activity added on Fittrackee with id {workout.id}")
+        return workout
+
+    def add_workout_no_gpx(
+        self,
+        sport_id: int,
+        workout_date: str,
+        distance: float,
+        duration: float,
+        title: str = "",
+    ):
+        data = {
+            "sport_id": sport_id,
+            "workout_date": workout_date,
+            "distance": distance,
+            "duration": duration,
+            "title": title,
+        }
+        try:
+            r = self.client.post(f"{self.api_url}/workouts/no_gpx", json=data)
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            log.error(
+                "Failed to post workout without gpx."
                 f"Return code {error_code}. Error {error.response.text}"
             )
             return
@@ -282,6 +349,25 @@ class Fittrackee:
             log.error(str(e))
             return
         log.warning(f"Workout {workout_id} deleted")
+
+    def refresh_workout(self, workout_id: str):
+        try:
+            r = self.client.post(f"{self.api_url}/workouts/{workout_id}/refresh")
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            if error_code == 404:
+                raise WorkoutNotFoundError(workout_id) from error
+            log.error(
+                f"Failed to refresh workout {workout_id}."
+                f"Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
+        log.info(f"Refresh asked for workout {workout_id}")
 
     @staticmethod
     def get_instance_config(host: str):
