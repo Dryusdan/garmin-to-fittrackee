@@ -10,12 +10,23 @@ import yaml
 from garminconnect import Garmin
 
 from garmin_to_fittrackee.fittrackee import Fittrackee
-from garmin_to_fittrackee.logs import Log
+from garmin_to_fittrackee.logs import Log, set_log_level
 from garmin_to_fittrackee.sports import Sports
 
 log = Log(name=__name__)
 
 app = typer.Typer()
+
+
+@app.callback()
+def main_callback(
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Enable debug logging.")
+    ] = False,
+):
+    if verbose:
+        set_log_level("DEBUG")
+
 
 GarminActivityFormatExtension = {
     "ActivityDownloadFormat.ORIGINAL": ".zip",

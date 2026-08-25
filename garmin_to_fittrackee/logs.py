@@ -8,6 +8,15 @@ home = str(Path.home())
 config_path = f"{home}/.config/garmin-to-fittrackee"
 
 
+def set_log_level(level: str):
+    logging.basicConfig(
+        level=level,
+        format="%(message)s %(module)s %(funcName)s",
+        handlers=[RichHandler(rich_tracebacks=True)],
+    )
+    logging.getLogger().setLevel(level)
+
+
 class Log:
     def __new__(self, name: str = "default", level: str = None):
         config_file = Path(f"{config_path}/config.yml")
