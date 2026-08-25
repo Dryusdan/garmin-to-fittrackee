@@ -59,7 +59,7 @@ In the "Add a new OAuth2 application" section, choose your `Application name`.
 
 To `application URL` and `Redirect URL` set this URL `https://localhost` (useful for configuration, later in this README).
 
-In Scope, check `profile:read`, `workouts:read`, `workouts:write`.
+In Scope, check `equipments:read`, `equipments:write`, `geocode:read`, `media:write`, `profile:read`, `profile:write`, `users:read`, `users:write`, `workouts:read`, `workouts:write`.
 
 > Note: the CLI requires a broader scope. When you run `setup fittrackee`, it displays the exact scope to check. You can safely check all the following scopes in your Fittrackee application: `equipments:read`, `equipments:write`, `media:write`, `profile:read`, `profile:write`, `workouts:read`, `workouts:write`.
 
@@ -89,3 +89,4 @@ garmin2fittrackee setup fittrackee
 The command asks for your application ID, application secret, the domain of your Fittrackee instance (without `https://`).
 
 Then the CLI will guide you through authorising the application to Fittrackee.
+⚠️ Be certain to copy/pasted all the line output (and do not ctrl+click on it). If you do not, the sync will fail. ⚠️
