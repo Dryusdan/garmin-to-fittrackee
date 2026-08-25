@@ -1,6 +1,9 @@
+from pathlib import Path
 from types import SimpleNamespace
 
 import pendulum
+import pytest
+import typer
 
 from garmin_to_fittrackee import main
 
@@ -110,7 +113,12 @@ def test_setup_garmin_store_writes_garmin_yml(mocker, tmp_path):
     assert "user@example.com" in config_file.read_text()
 
 
-def _make_sync_env(mocker, activities):
+def _make_sync_env(
+    mocker,
+    activities,
+    is_workout_present=True,
+    fetch_file="/tmp/fake_activity.zip",
+):
     mocker.patch.object(main, "config_exists", return_value=True)
     mocker.patch.object(main, "config", {"sqlite": {"use": False}}, create=True)
     db_mock = mocker.Mock()
@@ -123,16 +131,14 @@ def _make_sync_env(mocker, activities):
         workout_date=pendulum.now().add(days=-1).format("YYYY-MM-DD HH:mm:ss")
     )
     fittrackee_mock = mocker.Mock()
-    fittrackee_mock.is_workout_present.return_value = True
+    fittrackee_mock.is_workout_present.return_value = is_workout_present
     fittrackee_mock.get_last_workout.return_value = last_workout
     mocker.patch.object(main, "Fittrackee", return_value=fittrackee_mock)
     mocker.patch.object(
         main.Sports, "get_fittrackee_sport_by_garmin_id", return_value=13
     )
-    mocker.patch.object(
-        main, "_fetch_garmin_activity_file", return_value="/tmp/fake_activity.zip"
-    )
-    return garmin_mock, fittrackee_mock
+    mocker.patch.object(main, "_fetch_garmin_activity_file", return_value=fetch_file)
+    return garmin_mock, fittrackee_mock, db_mock
 
 
 def _make_activity():
@@ -147,7 +153,7 @@ def _make_activity():
 
 
 def test_sync_falls_back_to_no_gpx_when_upload_fails(mocker):
-    _, fittrackee_mock = _make_sync_env(mocker, [_make_activity()])
+    _, fittrackee_mock, _ = _make_sync_env(mocker, [_make_activity()])
     fittrackee_mock.upload_workout.return_value = None
     workout_mock = SimpleNamespace(id="w1")
     fittrackee_mock.add_workout_no_gpx.return_value = workout_mock
@@ -162,7 +168,178 @@ def test_sync_falls_back_to_no_gpx_when_upload_fails(mocker):
 
 
 def test_sync_does_not_fall_back_when_upload_succeeds(mocker):
-    _, fittrackee_mock = _make_sync_env(mocker, [_make_activity()])
+    _, fittrackee_mock, _ = _make_sync_env(mocker, [_make_activity()])
     fittrackee_mock.upload_workout.return_value = SimpleNamespace(id="w1")
     main.sync()
     fittrackee_mock.add_workout_no_gpx.assert_not_called()
+
+
+def test_sync_config_missing(mocker):
+    mocker.patch.object(main, "config_exists", return_value=False)
+    fittrackee_mock = mocker.patch.object(main, "Fittrackee")
+    main.sync()
+    fittrackee_mock.assert_not_called()
+
+
+def test_sync_invalid_activity_format(mocker):
+    mocker.patch.object(main, "config_exists", return_value=True)
+    with pytest.raises(typer.Exit):
+        main.sync(activity_format="nope")
+
+
+def test_sync_skips_existing_activity(mocker):
+    _, fittrackee_mock, db_mock = _make_sync_env(mocker, [_make_activity()])
+    db_mock.cursor().execute().fetchone.return_value = ("existing",)
+    main.sync()
+    fittrackee_mock.upload_workout.assert_not_called()
+    fittrackee_mock.add_workout_no_gpx.assert_not_called()
+
+
+def test_sync_activity_format_filter(mocker):
+    _, fittrackee_mock, _ = _make_sync_env(mocker, [_make_activity()])
+    fittrackee_mock.upload_workout.return_value = SimpleNamespace(id="w1")
+    main.sync(activity_format="gpx")
+    assert fittrackee_mock.upload_workout.call_count == 1
+
+
+def test_sync_fetch_file_none_falls_back(mocker):
+    _, fittrackee_mock, _ = _make_sync_env(mocker, [_make_activity()], fetch_file=None)
+    fittrackee_mock.add_workout_no_gpx.return_value = SimpleNamespace(id="w1")
+    main.sync()
+    fittrackee_mock.upload_workout.assert_not_called()
+    fittrackee_mock.add_workout_no_gpx.assert_called_once()
+
+
+def test_sync_no_workout_interactive(mocker):
+    garmin_mock, _, _ = _make_sync_env(mocker, [], is_workout_present=False)
+    mocker.patch("typer.prompt", return_value="2020")
+    main.sync(interactive=True)
+    garmin_mock.login.assert_called_once()
+
+
+def test_sync_no_workout_noninteractive_start_year(mocker):
+    garmin_mock, _, _ = _make_sync_env(mocker, [], is_workout_present=False)
+    main.sync(interactive=False, start_year=2020)
+    garmin_mock.login.assert_called_once()
+
+
+def test_sync_no_workout_noninteractive_no_year(mocker):
+    _make_sync_env(mocker, [], is_workout_present=False)
+    with pytest.raises(typer.Exit):
+        main.sync(interactive=False, start_year=None)
+
+
+def test_sync_start_year_too_old(mocker):
+    _make_sync_env(mocker, [], is_workout_present=False)
+    with pytest.raises(typer.Exit):
+        main.sync(interactive=False, start_year=1980)
+
+
+def test_fetch_garmin_activity_file(mocker, tmp_path):
+    mocker.patch.object(main, "default_tmp_path", str(tmp_path))
+    garmin_mock = mocker.Mock()
+    garmin_mock.download_activity.return_value = b"fake-data"
+    file = main._fetch_garmin_activity_file(
+        garmin_mock, 123, main.Garmin.ActivityDownloadFormat.ORIGINAL
+    )
+    assert file == f"{tmp_path}/123.zip"
+    assert Path(file).read_bytes() == b"fake-data"
+
+
+def test_save_activity_mapping_sqlite_enabled(mocker):
+    db_mock = mocker.Mock()
+    workout = SimpleNamespace(id="w1")
+    activity = {"activityId": 123}
+    main._save_activity_mapping(db_mock, workout, activity, {"sqlite": {"use": True}})
+    db_mock.cursor().execute.assert_called_once()
+    db_mock.commit.assert_called_once()
+
+
+def test_send_to_fittrackee():
+    main._send_to_fittrackee()
+
+
+def test_reset_no_force():
+    main.reset(force=False)
+
+
+def test_reset_force(mocker):
+    db_mock = mocker.Mock()
+    mocker.patch.object(main, "db", db_mock, create=True)
+    fittrackee_mock = mocker.Mock()
+    fittrackee_mock.get_all_workouts.return_value = [
+        SimpleNamespace(id="w1"),
+        SimpleNamespace(id="w2"),
+    ]
+    mocker.patch.object(main, "Fittrackee", return_value=fittrackee_mock)
+    main.reset(force=True)
+    assert db_mock.commit.call_count == 2
+    assert fittrackee_mock.delete_workout.call_count == 2
+
+
+def test_setup_fittrackee_success(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    fittrackee_class = mocker.patch.object(main, "Fittrackee")
+    fittrackee_class.is_instance_is_supported.return_value = True
+    main.fittrackee(
+        client_id="cid",
+        client_secret="cs",
+        fittrackee_domain="https://ft.example.com",
+        force=False,
+    )
+    fittrackee_class.assert_called_once_with(
+        config_path=str(tmp_path),
+        client_id="cid",
+        client_secret="cs",
+        host="ft.example.com",
+    )
+
+
+def test_setup_fittrackee_unsupported(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    fittrackee_class = mocker.patch.object(main, "Fittrackee")
+    fittrackee_class.is_instance_is_supported.return_value = False
+    with pytest.raises(typer.Exit):
+        main.fittrackee(
+            client_id="c",
+            client_secret="s",
+            fittrackee_domain="ft.example.com",
+            force=False,
+        )
+
+
+def test_setup_fittrackee_force_unlinks_config(mocker, tmp_path):
+    config_file = tmp_path / "fittrackee.yml"
+    config_file.write_text("old")
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    fittrackee_class = mocker.patch.object(main, "Fittrackee")
+    fittrackee_class.is_instance_is_supported.return_value = True
+    main.fittrackee(
+        client_id="c",
+        client_secret="s",
+        fittrackee_domain="ft.example.com",
+        force=True,
+    )
+    assert not config_file.exists()
+
+
+def test_config_tool(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    db_mock = mocker.Mock()
+    mocker.patch("sqlite3.connect", return_value=db_mock)
+    db_path = str(tmp_path / "db")
+    main.config_tool(database_path=db_path, verbose_level="DEBUG")
+    assert "DEBUG" in (tmp_path / "config.yml").read_text()
+    db_mock.cursor().execute.assert_called_once()
+
+
+def test_config_exists_true(mocker):
+    mocker.patch("pathlib.Path.is_dir", return_value=True)
+    mocker.patch("pathlib.Path.is_file", return_value=True)
+    assert main.config_exists() is True
+
+
+def test_config_exists_false(mocker):
+    mocker.patch("pathlib.Path.is_dir", return_value=False)
+    mocker.patch("pathlib.Path.is_file", return_value=False)
+    assert main.config_exists() is False
