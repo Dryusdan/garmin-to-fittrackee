@@ -62,6 +62,9 @@ select = [
 [tool.ruff.format]
 docstring-code-format = true
 
+[tool.isort]
+profile = "black"
+
 [tool.coverage.run]
 omit = [
     "tests/*",
