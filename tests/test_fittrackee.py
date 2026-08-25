@@ -61,6 +61,106 @@ def test_fittrackee_first_run(mocker):
     assert fittrackee.host == "dev.localhost.tld"
 
 
+def test_web_application_flow_scope(mocker):
+    mocker.patch("pathlib.Path.is_file", return_value=False)
+    mocker.patch("pathlib.Path.open", mocker.mock_open())
+    mocker.patch.object(Fittrackee, "_Fittrackee__auth", return_value=None)
+    mocker.patch(
+        "typer.prompt",
+        return_value="https://localhost/?code=UYahh0KeiquohsaidooRohshi2aeveepuu7zeeY6Ois4ZiDetee3quu0vi0eojee&state=eenah7oopahYeec8shi9hepaefae8iem",
+    )
+    expire_at = pendulum.now().add(days=7)
+    mocker.patch(
+        "requests_oauthlib.OAuth2Session.fetch_token",
+        return_value={
+            "access_token": "queeL7pah9tieniexeisoo5kux3ohsa",
+            "expires_in": 864000,
+            "refresh_token": "Ohsh9jau6ohdeethahp6te1eehivahB",
+            "scope": [
+                "workouts:read",
+                "workouts:write",
+                "profile:read",
+                "profile:write",
+                "equipments:read",
+                "equipments:write",
+                "media:write",
+            ],
+            "token_type": "Bearer",
+            "expires_at": expire_at.timestamp(),
+        },
+    )
+    oauth_mock = mocker.patch("garmin_to_fittrackee.fittrackee.OAuth2Session")
+    oauth_mock.return_value.authorization_url.return_value = (
+        "https://dev.localhost.tld/profile/apps/authorize?state=test",
+        "test",
+    )
+    mocker.patch.object(Fittrackee, "_Fittrackee__save_config", return_value=None)
+    fittrackee = Fittrackee(
+        config_path="config/",
+        client_id="gaiyo8iengim1ohjohqu3Iethaokaeso",
+        client_secret="giPahYiechieGhath1fah9lohsh7Thoh",
+        host="dev.localhost.tld",
+    )
+    fittrackee._Fittrackee__web_application_flow()
+    scope = oauth_mock.call_args.kwargs["scope"]
+    assert scope == (
+        "workouts:read workouts:write profile:read profile:write "
+        "equipments:read equipments:write media:write"
+    )
+    oauth_mock.return_value.fetch_token.assert_called()
+
+
+def test_web_application_flow_missing_state_raises(mocker):
+    mocker.patch("pathlib.Path.is_file", return_value=False)
+    mocker.patch("pathlib.Path.open", mocker.mock_open())
+    mocker.patch.object(Fittrackee, "_Fittrackee__auth", return_value=None)
+    mocker.patch(
+        "typer.prompt",
+        return_value="https://localhost/?code=UYahh0KeiquohsaidooRohshi2aeveepuu7zeeY6Ois4ZiDetee3quu0vi0eojee",
+    )
+    fetch_token = mocker.patch("requests_oauthlib.OAuth2Session.fetch_token")
+    fittrackee = Fittrackee(
+        config_path="config/",
+        client_id="gaiyo8iengim1ohjohqu3Iethaokaeso",
+        client_secret="giPahYiechieGhath1fah9lohsh7Thoh",
+        host="dev.localhost.tld",
+    )
+    with pytest.raises(typer.Exit) as excinfo:
+        fittrackee._Fittrackee__web_application_flow()
+    assert excinfo.value.exit_code == 1
+    fetch_token.assert_not_called()
+
+
+def test_web_application_flow_with_state(mocker):
+    mocker.patch("pathlib.Path.is_file", return_value=False)
+    mocker.patch("pathlib.Path.open", mocker.mock_open())
+    mocker.patch.object(Fittrackee, "_Fittrackee__auth", return_value=None)
+    mocker.patch(
+        "typer.prompt",
+        return_value="https://localhost/?code=UYahh0KeiquohsaidooRohshi2aeveepuu7zeeY6Ois4ZiDetee3quu0vi0eojee&state=eenah7oopahYeec8shi9hepaefae8iem",
+    )
+    expire_at = pendulum.now().add(days=7)
+    mocker.patch(
+        "requests_oauthlib.OAuth2Session.fetch_token",
+        return_value={
+            "access_token": "queeL7pah9tieniexeisoo5kux3ohsa",
+            "expires_in": 864000,
+            "refresh_token": "Ohsh9jau6ohdeethahp6te1eehivahB",
+            "scope": ["workouts:read", "workouts:write", "profile:read"],
+            "token_type": "Bearer",
+            "expires_at": expire_at.timestamp(),
+        },
+    )
+    fittrackee = Fittrackee(
+        config_path="config/",
+        client_id="gaiyo8iengim1ohjohqu3Iethaokaeso",
+        client_secret="giPahYiechieGhath1fah9lohsh7Thoh",
+        host="dev.localhost.tld",
+    )
+    oauth = fittrackee._Fittrackee__web_application_flow()
+    assert oauth is not None
+
+
 config_bad_fittrackee_yaml = Path(
     f"{Path().resolve()}/tests/files/config_bad_fittrackee.yaml"
 ).read_text()

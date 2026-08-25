@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import Union
+from urllib.parse import parse_qs, urlparse
 
 import pendulum
 import requests
@@ -17,6 +18,11 @@ log = Log(__name__)
 
 
 class Fittrackee:
+    @staticmethod
+    def _extract_state(authorization_response: str):
+        params = parse_qs(urlparse(authorization_response).query)
+        return params.get("state", [None])[0]
+
     def __init__(
         self,
         config_path: str,
@@ -97,15 +103,30 @@ class Fittrackee:
         self.api_url = f"https://{self.host}/api"
 
         redirect_uri = "https://localhost/"
-        scope = "workouts:read workouts:write profile:read"
+        scope = (
+            "workouts:read workouts:write profile:read profile:write "
+            "equipments:read equipments:write media:write"
+        )
         oauth = OAuth2Session(self.client_id, redirect_uri=redirect_uri, scope=scope)
         authorization_url, state = oauth.authorization_url(authorize_url)
-        print(f"Please go to {authorization_url} and authorize access.\n")
+        print(
+            "Please go to the following URL and authorize access:\n"
+            f"{authorization_url}\n"
+            "Make sure to copy the full URL (it ends with `state=...`)."
+        )
         authorization_response = typer.prompt(
             "Enter the full callback URL from the browser address bar"
             "after you are redirected and press <enter>"
         )
         print(authorization_response)
+        if self._extract_state(authorization_response) is None:
+            log.error(
+                "The callback URL is incomplete: the `state` parameter is missing. "
+                "This usually happens when the URL is truncated when copied from "
+                "the terminal (the full URL ends with `state=...`). "
+                "Copy the full URL from your browser address bar and try again."
+            )
+            raise typer.Exit(code=1)
         log.debug("Logging to fittrackee instance")
         self.tokens = oauth.fetch_token(
             f"{self.api_url}/oauth/token",
