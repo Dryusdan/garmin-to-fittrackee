@@ -13,6 +13,11 @@ from rich import print
 from garmin_to_fittrackee.logs import Log
 from garmin_to_fittrackee.workout import Workout
 
+
+class WorkoutNotFoundError(Exception):
+    pass
+
+
 log = Log(__name__)
 
 OAUTH_SCOPE = (
@@ -352,6 +357,8 @@ class Fittrackee:
         except requests.exceptions.HTTPError as error:
             error_code = error.response.status_code
             log.debug(error.response.headers)
+            if error_code == 404:
+                raise WorkoutNotFoundError(workout_id) from error
             log.error(
                 f"Failed to refresh workout {workout_id}."
                 f"Return code {error_code}. Error {error.response.text}"

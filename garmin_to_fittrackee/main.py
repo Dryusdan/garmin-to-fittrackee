@@ -15,6 +15,7 @@ from garmin_to_fittrackee.fittrackee import (
     OAUTH_REDIRECT_URI,
     OAUTH_SCOPE,
     Fittrackee,
+    WorkoutNotFoundError,
 )
 from garmin_to_fittrackee.logs import Log, set_log_level
 from garmin_to_fittrackee.sports import Sports
@@ -285,13 +286,18 @@ def refresh(
     if not config_exists():
         return
     fittrackee = Fittrackee(config_path)
+    if workout_id:
+        log.info(f"Refresh only workout {workout_id}")
+        try:
+            fittrackee.refresh_workout(workout_id)
+        except WorkoutNotFoundError:
+            log.error(f"Workout {workout_id} not found on Fittrackee.")
+            raise typer.Exit(code=1) from None
+        return
     workouts = fittrackee.get_all_workouts()
     if not workouts:
         log.warning("No workout found on Fittrackee")
         return
-    if workout_id:
-        log.info(f"Refresh only workout {workout_id}")
-        workouts = [workout for workout in workouts if workout.id == workout_id]
     if from_date:
         start = pendulum.parse(from_date, strict=False)
         workouts = [
@@ -302,7 +308,10 @@ def refresh(
     if limit is not None:
         workouts = workouts[:limit]
     for workout in workouts:
-        fittrackee.refresh_workout(workout.id)
+        try:
+            fittrackee.refresh_workout(workout.id)
+        except WorkoutNotFoundError:
+            log.error(f"Workout {workout.id} not found on Fittrackee.")
 
 
 @app.command()

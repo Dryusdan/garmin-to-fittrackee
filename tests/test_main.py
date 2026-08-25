@@ -6,6 +6,7 @@ import pytest
 import typer
 
 from garmin_to_fittrackee import main
+from garmin_to_fittrackee.fittrackee import WorkoutNotFoundError
 
 
 def test_main_callback_verbose_enables_debug(mocker):
@@ -45,7 +46,28 @@ def test_refresh_workout_id(mocker):
     ]
     fittrackee_mock = _make_fittrackee(mocker, workouts)
     main.refresh(workout_id="w2")
+    fittrackee_mock.get_all_workouts.assert_not_called()
     fittrackee_mock.refresh_workout.assert_called_once_with("w2")
+
+
+def test_refresh_workout_id_not_found(mocker):
+    fittrackee_mock = _make_fittrackee(mocker, [])
+    fittrackee_mock.refresh_workout.side_effect = WorkoutNotFoundError("w2")
+    with pytest.raises(typer.Exit) as excinfo:
+        main.refresh(workout_id="w2")
+    assert excinfo.value.exit_code == 1
+    fittrackee_mock.get_all_workouts.assert_not_called()
+
+
+def test_refresh_skips_missing_workout(mocker):
+    workouts = [
+        SimpleNamespace(id="w1", workout_date="2024-01-14 13:09:59"),
+        SimpleNamespace(id="w2", workout_date="2024-02-20 08:00:00"),
+    ]
+    fittrackee_mock = _make_fittrackee(mocker, workouts)
+    fittrackee_mock.refresh_workout.side_effect = WorkoutNotFoundError("w1")
+    main.refresh()
+    assert fittrackee_mock.refresh_workout.call_count == 2
 
 
 def test_refresh_from_date(mocker):

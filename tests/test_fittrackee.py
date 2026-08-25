@@ -9,7 +9,7 @@ import requests_mock
 import typer
 import yaml
 
-from garmin_to_fittrackee.fittrackee import Fittrackee
+from garmin_to_fittrackee.fittrackee import Fittrackee, WorkoutNotFoundError
 
 config_fittrackee_yaml = Path(f"{Path().resolve()}/tests/files/config_fittrackee.yaml")
 
@@ -348,6 +348,17 @@ def test_refresh_workout_http_error(fittrackee):
         )
         workout = fittrackee.refresh_workout(workout_id=workout_id)
         assert workout is None
+
+
+def test_refresh_workout_not_found(fittrackee):
+    workout_id = "eechieshocifah4ohquaiphiThiF9io"
+    with requests_mock.Mocker() as m:
+        m.post(
+            f"https://dev.localhost.tld/api/workouts/{workout_id}/refresh",
+            status_code=404,
+        )
+        with pytest.raises(WorkoutNotFoundError):
+            fittrackee.refresh_workout(workout_id=workout_id)
 
 
 def test_refresh_workout_connection_error(fittrackee):
