@@ -8,14 +8,33 @@ import pendulum
 import typer
 import yaml
 from garminconnect import Garmin
+from rich.console import Console
+from rich.panel import Panel
 
-from garmin_to_fittrackee.fittrackee import Fittrackee
-from garmin_to_fittrackee.logs import Log
+from garmin_to_fittrackee.fittrackee import (
+    OAUTH_REDIRECT_URI,
+    OAUTH_SCOPE,
+    Fittrackee,
+    WorkoutNotFoundError,
+)
+from garmin_to_fittrackee.logs import Log, set_log_level
 from garmin_to_fittrackee.sports import Sports
 
 log = Log(name=__name__)
+console = Console()
 
 app = typer.Typer()
+
+
+@app.callback()
+def main_callback(
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Enable debug logging.")
+    ] = False,
+):
+    if verbose:
+        set_log_level("DEBUG")
+
 
 GarminActivityFormatExtension = {
     "ActivityDownloadFormat.ORIGINAL": ".zip",
@@ -163,6 +182,7 @@ def sync(
                 fittrackee_sport_id = Sports.get_fittrackee_sport_by_garmin_id(
                     activityType_id
                 )
+                workout = None
                 for _, fileformat in GarminActivityFormat.items():
                     if (
                         activity_format
@@ -186,23 +206,24 @@ def sync(
                     if workout is not None:
                         log.debug(f"Deleting {file}")
                         Path(file).unlink(missing_ok=True)
-                        if config["sqlite"]["use"]:
-                            log.debug(
-                                "Adding workout and activity matches in tool database"
-                            )
-                            log.debug(
-                                f"Using Fittrackee ID {workout.id}"
-                                f"and Garmin ID {activity['activityId']}"
-                            )
-                            data_insert = (workout.id, activity["activityId"])
-                            cur = db.cursor()
-                            cur.execute(
-                                "INSERT INTO activities_ids (fittrackee_id, garmin_id)"
-                                "VALUES(?, ?)",
-                                data_insert,
-                            )
-                            db.commit()
                         break
+                if workout is None:
+                    log.info(
+                        "No file-based upload succeeded for activity "
+                        f"{activity['activityId']}; adding it as a workout "
+                        "without GPS"
+                    )
+                    workout = fittrackee.add_workout_no_gpx(
+                        sport_id=fittrackee_sport_id,
+                        workout_date=pendulum.parse(activity["startTimeLocal"]).format(
+                            "YYYY-MM-DD HH:mm"
+                        ),
+                        distance=activity.get("distance", 0) / 1000,
+                        duration=activity.get("duration", 0),
+                        title=activity.get("activityName", ""),
+                    )
+                if workout is not None:
+                    _save_activity_mapping(db, workout, activity, config)
         start_datetime = start_datetime.add(days=2)
         end_datetime = start_datetime.add(days=1)
         if today.diff(end_datetime, False).in_seconds() > 0:
@@ -221,8 +242,76 @@ def _fetch_garmin_activity_file(garmin, activity_id: int, GarminFileFormat):
     return file
 
 
+def _save_activity_mapping(db, workout, activity, config):
+    if not config["sqlite"]["use"]:
+        return
+    log.debug("Adding workout and activity matches in tool database")
+    log.debug(
+        f"Using Fittrackee ID {workout.id} and Garmin ID {activity['activityId']}"
+    )
+    data_insert = (workout.id, activity["activityId"])
+    cur = db.cursor()
+    cur.execute(
+        "INSERT INTO activities_ids (fittrackee_id, garmin_id) VALUES(?, ?)",
+        data_insert,
+    )
+    db.commit()
+
+
 def _send_to_fittrackee():
     pass
+
+
+@app.command()
+def refresh(
+    workout_id: Annotated[
+        str,
+        typer.Option(help="Refresh a single workout by its Fittrackee id."),
+    ] = None,
+    from_date: Annotated[
+        str,
+        typer.Option(
+            "--from",
+            help="Only refresh workouts dated on or after this date (YYYY-MM-DD).",
+        ),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Maximum number of workouts to refresh."),
+    ] = None,
+):
+    """
+    Refresh all workouts on Fittrackee (recalculate data, update weather).
+    """
+    if not config_exists():
+        return
+    fittrackee = Fittrackee(config_path)
+    if workout_id:
+        log.info(f"Refresh only workout {workout_id}")
+        try:
+            fittrackee.refresh_workout(workout_id)
+        except WorkoutNotFoundError:
+            log.error(f"Workout {workout_id} not found on Fittrackee.")
+            raise typer.Exit(code=1) from None
+        return
+    workouts = fittrackee.get_all_workouts()
+    if not workouts:
+        log.warning("No workout found on Fittrackee")
+        return
+    if from_date:
+        start = pendulum.parse(from_date, strict=False)
+        workouts = [
+            workout
+            for workout in workouts
+            if pendulum.parse(workout.workout_date, strict=False) >= start
+        ]
+    if limit is not None:
+        workouts = workouts[:limit]
+    for workout in workouts:
+        try:
+            fittrackee.refresh_workout(workout.id)
+        except WorkoutNotFoundError:
+            log.error(f"Workout {workout.id} not found on Fittrackee.")
 
 
 @app.command()
@@ -276,30 +365,28 @@ def garmin(
     ],
     store: bool = True,
 ):
-    garmin = Garmin(email, password)
-    garmin.login()
+    garmin = Garmin(
+        email, password, prompt_mfa=lambda: input("Enter the MFA code received: ")
+    )
+    garmin.login(f"{config_path}/garmintoken")
     if store:
         data = {"garmin": {"username": email, "password": password}}
         with open(f"{config_path}/garmin.yml", "w") as file:
             yaml.dump(data, file, default_flow_style=False)
-
-    garmin.garth.dump(f"{config_path}/garmintoken")
 
 
 @setup.command()
 def fittrackee(
     client_id: Annotated[
         str,
-        typer.Option(help="Client id of fittrackee. If not specify, we use prompt.")
-        == "",
-        typer.Option(prompt=True),
-    ],
+        typer.Option(help="Client id of fittrackee. If not specify, we use prompt."),
+    ] = "",
     client_secret: Annotated[
         str,
-        typer.Option(help="Client secret of fittrackee. If not specify, we use prompt.")
-        == "",
-        typer.Option(prompt=True, hide_input=True),
-    ],
+        typer.Option(
+            help="Client secret of fittrackee. If not specify, we use prompt."
+        ),
+    ] = "",
     fittrackee_domain: Annotated[
         str,
         typer.Option(
@@ -307,12 +394,27 @@ def fittrackee(
                 "Domain of Fittrackee instance (without https)."
                 "If not specify, we use prompt."
             )
-        )
-        == "",
-        typer.Option(prompt=True),
-    ],
+        ),
+    ] = "",
     force: Annotated[bool, typer.Option(help="Rewrite configuration file")] = False,
 ):
+    console.print(
+        Panel(
+            "[bold]To configure your Fittrackee OAuth2 application, use:[/bold]\n\n"
+            f"[bold]Scope:[/bold] {OAUTH_SCOPE}\n"
+            f"[bold]Redirect URL:[/bold] {OAUTH_REDIRECT_URI}",
+            title="Fittrackee setup",
+            border_style="green",
+        )
+    )
+    if not client_id:
+        client_id = typer.prompt("Client id")
+    if not client_secret:
+        client_secret = typer.prompt("Client secret", hide_input=True)
+    if not fittrackee_domain:
+        fittrackee_domain = typer.prompt(
+            "Domain of your Fittrackee instance (without https://)"
+        )
     if force:
         log.warning("Rewrite configuration file")
         Path(f"{config_path}/fittrackee.yml").unlink(missing_ok=True)

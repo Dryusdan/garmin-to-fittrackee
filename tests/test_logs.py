@@ -1,8 +1,16 @@
 from pathlib import Path
 
-from garmin_to_fittrackee.logs import Log
+from garmin_to_fittrackee.logs import Log, set_log_level
 
 config_yaml = Path(f"{Path().resolve()}/tests/files/config.yml").read_text()
+
+
+def test_set_log_level(mocker):
+    basic_config = mocker.patch("garmin_to_fittrackee.logs.logging.basicConfig")
+    get_logger = mocker.patch("garmin_to_fittrackee.logs.logging.getLogger")
+    set_log_level("DEBUG")
+    basic_config.assert_called_once()
+    get_logger.return_value.setLevel.assert_called_once_with("DEBUG")
 
 
 def test_log_without_args(mocker):
@@ -37,4 +45,12 @@ def test_log_without_args_without_config(mocker):
 
 def test_log_info():
     log = Log(name="test", level="INFO")
+    assert log.level == 0
+
+
+def test_log_uses_level_from_config(mocker):
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("pathlib.Path.is_file", return_value=True)
+    mocker.patch("pathlib.Path.open", mocker.mock_open(read_data=config_yaml))
+    log = Log(name="test")
     assert log.level == 0
