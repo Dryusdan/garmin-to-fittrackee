@@ -76,3 +76,33 @@ def test_refresh_config_missing(mocker):
     fittrackee_mock = mocker.patch.object(main, "Fittrackee")
     main.refresh()
     fittrackee_mock.assert_not_called()
+
+
+def test_setup_garmin_login_uses_tokenstore(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    garmin_mock = mocker.Mock()
+    garmin_class = mocker.patch.object(main, "Garmin", return_value=garmin_mock)
+    main.garmin(email="user@example.com", password="secret", store=False)
+    args, kwargs = garmin_class.call_args
+    assert args == ("user@example.com", "secret")
+    assert callable(kwargs["prompt_mfa"])
+    garmin_mock.login.assert_called_once_with(f"{tmp_path}/garmintoken")
+
+
+def test_setup_garmin_prompt_mfa_reads_input(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    mocker.patch.object(main, "Garmin")
+    input_mock = mocker.patch("builtins.input", return_value="123456")
+    main.garmin(email="user@example.com", password="secret", store=False)
+    _, kwargs = main.Garmin.call_args
+    assert kwargs["prompt_mfa"]() == "123456"
+    input_mock.assert_called_once()
+
+
+def test_setup_garmin_store_writes_garmin_yml(mocker, tmp_path):
+    mocker.patch.object(main, "config_path", str(tmp_path))
+    mocker.patch.object(main, "Garmin")
+    main.garmin(email="user@example.com", password="secret", store=True)
+    config_file = tmp_path / "garmin.yml"
+    assert config_file.is_file()
+    assert "user@example.com" in config_file.read_text()

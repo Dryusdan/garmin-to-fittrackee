@@ -331,14 +331,14 @@ def garmin(
     ],
     store: bool = True,
 ):
-    garmin = Garmin(email, password)
-    garmin.login()
+    garmin = Garmin(
+        email, password, prompt_mfa=lambda: input("Enter the MFA code received: ")
+    )
+    garmin.login(f"{config_path}/garmintoken")
     if store:
         data = {"garmin": {"username": email, "password": password}}
         with open(f"{config_path}/garmin.yml", "w") as file:
             yaml.dump(data, file, default_flow_style=False)
-
-    garmin.garth.dump(f"{config_path}/garmintoken")
 
 
 @setup.command()
