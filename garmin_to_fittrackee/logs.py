@@ -11,7 +11,7 @@ config_path = f"{home}/.config/garmin-to-fittrackee"
 def set_log_level(level: str):
     logging.basicConfig(
         level=level,
-        format="%(message)s %(module)s %(funcName)s",
+        format="[%(module)s/%(funcName)s] %(message)s",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
     logging.getLogger().setLevel(level)
@@ -37,7 +37,7 @@ class Log:
 
         log = logging.basicConfig(
             level=level,
-            format="%(message)s %(module)s %(funcName)s",
+            format="[%(module)s/%(funcName)s] %(message)s",
             handlers=[RichHandler(rich_tracebacks=True)],
         )
         log = logging.getLogger(name=name)

@@ -332,11 +332,9 @@ def test_refresh_workout(fittrackee):
     with requests_mock.Mocker() as m:
         m.post(
             f"https://dev.localhost.tld/api/workouts/{workout_id}/refresh",
-            text=post_workout_responses,
             status_code=200,
         )
-        workout = fittrackee.refresh_workout(workout_id=workout_id)
-        assert type(workout).__name__ == "Workout"
+        fittrackee.refresh_workout(workout_id=workout_id)
 
 
 def test_refresh_workout_http_error(fittrackee):

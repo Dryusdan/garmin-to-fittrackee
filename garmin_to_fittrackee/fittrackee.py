@@ -367,12 +367,7 @@ class Fittrackee:
         except requests.RequestException as e:
             log.error(str(e))
             return
-        results = r.json()
-        workout = object.__new__(Workout)
-        workout.__dict__ = results["data"]["workouts"][0]
-        workout.set_present_in_fittrackee()
-        log.info(f"Workout {workout.id} refreshed")
-        return workout
+        log.info(f"Refresh asked for workout {workout_id}")
 
     @staticmethod
     def get_instance_config(host: str):
