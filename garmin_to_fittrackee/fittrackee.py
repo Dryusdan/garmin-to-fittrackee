@@ -212,7 +212,7 @@ class Fittrackee:
                 f"Fetched page {page} of workouts (fetched {len(workouts)} so far)"
             )
             page += 1
-            return workouts
+        return workouts
 
     def get_last_workout(self):
         try:
@@ -302,6 +302,28 @@ class Fittrackee:
             log.error(str(e))
             return
         log.warning(f"Workout {workout_id} deleted")
+
+    def refresh_workout(self, workout_id: str):
+        try:
+            r = self.client.post(f"{self.api_url}/workouts/{workout_id}/refresh")
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            error_code = error.response.status_code
+            log.debug(error.response.headers)
+            log.error(
+                f"Failed to refresh workout {workout_id}."
+                f"Return code {error_code}. Error {error.response.text}"
+            )
+            return
+        except requests.RequestException as e:
+            log.error(str(e))
+            return
+        results = r.json()
+        workout = object.__new__(Workout)
+        workout.__dict__ = results["data"]["workouts"][0]
+        workout.set_present_in_fittrackee()
+        log.info(f"Workout {workout.id} refreshed")
+        return workout
 
     @staticmethod
     def get_instance_config(host: str):

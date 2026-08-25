@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from unittest import mock
 
@@ -177,16 +178,25 @@ def bad_fittrackee(mocker):
 all_workouts = Path(f"{Path().resolve()}/tests/files/all_workouts.json").read_text()
 
 
+def _workouts_page(request, context):
+    page = int(request.qs.get("page", ["1"])[0])
+    data = json.loads(all_workouts)
+    data["pagination"]["has_next"] = page < 2
+    data["pagination"]["page"] = page
+    return json.dumps(data)
+
+
 def test_get_all_workouts(fittrackee):
     with requests_mock.Mocker() as m:
         m.get(
             "https://dev.localhost.tld/api/workouts",
-            text=all_workouts,
+            text=_workouts_page,
             status_code=200,
         )
         workouts = fittrackee.get_all_workouts()
         assert type(workouts[0]).__name__ == "Workout"
         assert type(workouts[1]).__name__ == "Workout"
+        assert len(workouts) == 4
 
 
 def test_get_all_workouts_http_error(fittrackee):
@@ -306,6 +316,40 @@ def test_delete_workout_connection_error(fittrackee):
             exc=requests.exceptions.ConnectionError(),
         )
         workout = fittrackee.delete_workout(workout_id=workout_id)
+        assert workout is None
+
+
+def test_refresh_workout(fittrackee):
+    workout_id = "eechieshocifah4ohquaiphiThiF9io"
+    with requests_mock.Mocker() as m:
+        m.post(
+            f"https://dev.localhost.tld/api/workouts/{workout_id}/refresh",
+            text=post_workout_responses,
+            status_code=200,
+        )
+        workout = fittrackee.refresh_workout(workout_id=workout_id)
+        assert type(workout).__name__ == "Workout"
+
+
+def test_refresh_workout_http_error(fittrackee):
+    workout_id = "eechieshocifah4ohquaiphiThiF9io"
+    with requests_mock.Mocker() as m:
+        m.post(
+            f"https://dev.localhost.tld/api/workouts/{workout_id}/refresh",
+            status_code=401,
+        )
+        workout = fittrackee.refresh_workout(workout_id=workout_id)
+        assert workout is None
+
+
+def test_refresh_workout_connection_error(fittrackee):
+    workout_id = "eechieshocifah4ohquaiphiThiF9io"
+    with requests_mock.Mocker() as m:
+        m.post(
+            f"https://dev.localhost.tld/api/workouts/{workout_id}/refresh",
+            exc=requests.exceptions.ConnectionError(),
+        )
+        workout = fittrackee.refresh_workout(workout_id=workout_id)
         assert workout is None
 
 

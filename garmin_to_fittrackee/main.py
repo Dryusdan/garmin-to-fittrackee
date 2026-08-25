@@ -237,6 +237,50 @@ def _send_to_fittrackee():
 
 
 @app.command()
+def refresh(
+    workout_id: Annotated[
+        str,
+        typer.Option(help="Refresh a single workout by its Fittrackee id."),
+    ] = None,
+    from_date: Annotated[
+        str,
+        typer.Option(
+            "--from",
+            help="Only refresh workouts dated on or after this date (YYYY-MM-DD).",
+        ),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Maximum number of workouts to refresh."),
+    ] = None,
+):
+    """
+    Refresh all workouts on Fittrackee (recalculate data, update weather).
+    """
+    if not config_exists():
+        return
+    fittrackee = Fittrackee(config_path)
+    workouts = fittrackee.get_all_workouts()
+    if not workouts:
+        log.warning("No workout found on Fittrackee")
+        return
+    if workout_id:
+        log.info(f"Refresh only workout {workout_id}")
+        workouts = [workout for workout in workouts if workout.id == workout_id]
+    if from_date:
+        start = pendulum.parse(from_date, strict=False)
+        workouts = [
+            workout
+            for workout in workouts
+            if pendulum.parse(workout.workout_date, strict=False) >= start
+        ]
+    if limit is not None:
+        workouts = workouts[:limit]
+    for workout in workouts:
+        fittrackee.refresh_workout(workout.id)
+
+
+@app.command()
 def reset(
     force: Annotated[
         bool,
