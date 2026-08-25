@@ -111,25 +111,33 @@ def test_web_application_flow_scope(mocker):
     oauth_mock.return_value.fetch_token.assert_called()
 
 
-def test_web_application_flow_missing_state_raises(mocker):
+def test_web_application_flow_retries_on_missing_state(mocker):
     mocker.patch("pathlib.Path.is_file", return_value=False)
     mocker.patch("pathlib.Path.open", mocker.mock_open())
     mocker.patch.object(Fittrackee, "_Fittrackee__auth", return_value=None)
     mocker.patch(
         "typer.prompt",
-        return_value="https://localhost/?code=UYahh0KeiquohsaidooRohshi2aeveepuu7zeeY6Ois4ZiDetee3quu0vi0eojee",
+        side_effect=[
+            "https://localhost/?code=UYahh0KeiquohsaidooRohshi2aeveepuu7zeeY6Ois4ZiDetee3quu0vi0eojee",
+            "https://localhost/?code=UYahh0KeiquohsaidooRohshi2aeveepuu7zeeY6Ois4ZiDetee3quu0vi0eojee&state=eenah7oopahYeec8shi9hepaefae8iem",
+        ],
     )
-    fetch_token = mocker.patch("requests_oauthlib.OAuth2Session.fetch_token")
+    fetch_token = mocker.patch(
+        "requests_oauthlib.OAuth2Session.fetch_token",
+        return_value={
+            "access_token": "access",
+            "refresh_token": "refresh",
+            "expires_at": pendulum.now().add(days=7).timestamp(),
+        },
+    )
     fittrackee = Fittrackee(
         config_path="config/",
         client_id="gaiyo8iengim1ohjohqu3Iethaokaeso",
         client_secret="giPahYiechieGhath1fah9lohsh7Thoh",
         host="dev.localhost.tld",
     )
-    with pytest.raises(typer.Exit) as excinfo:
-        fittrackee._Fittrackee__web_application_flow()
-    assert excinfo.value.exit_code == 1
-    fetch_token.assert_not_called()
+    fittrackee._Fittrackee__web_application_flow()
+    fetch_token.assert_called_once()
 
 
 def test_web_application_flow_with_state(mocker):

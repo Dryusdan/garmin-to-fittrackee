@@ -116,19 +116,21 @@ class Fittrackee:
             f"{authorization_url}\n"
             "Make sure to copy the full URL (it ends with `state=...`)."
         )
-        authorization_response = typer.prompt(
-            "Enter the full callback URL from the browser address bar"
-            "after you are redirected and press <enter>"
-        )
-        print(authorization_response)
-        if self._extract_state(authorization_response) is None:
-            log.error(
-                "The callback URL is incomplete: the `state` parameter is missing. "
-                "This usually happens when the URL is truncated when copied from "
-                "the terminal (the full URL ends with `state=...`). "
-                "Copy the full URL from your browser address bar and try again."
+        while True:
+            authorization_response = typer.prompt(
+                "Enter the full callback URL from the browser address bar"
+                "after you are redirected and press <enter>"
             )
-            raise typer.Exit(code=1)
+            print(authorization_response)
+            if self._extract_state(authorization_response) is None:
+                log.error(
+                    "The callback URL is incomplete: the `state` parameter is missing. "
+                    "This usually happens when the URL is truncated when copied from "
+                    "the terminal (the full URL ends with `state=...`). "
+                    "Copy the full URL from your browser address bar and try again."
+                )
+                continue
+            break
         log.debug("Logging to fittrackee instance")
         self.tokens = oauth.fetch_token(
             f"{self.api_url}/oauth/token",
